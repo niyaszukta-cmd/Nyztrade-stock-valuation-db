@@ -508,13 +508,19 @@ def _grant(cfg, info):
     st.rerun()
 
 
-GATE_CSS = """
+# ---------------------------------------------------------------------------
+# Shared look. BASE_CSS is injected on every screen; the gate and the
+# worksheet each add their own layer on top. Keeping the tokens in one place
+# is why the paid screen and the calculator look like the same product.
+# ---------------------------------------------------------------------------
+BASE_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');
 
-/* Streamlit's chrome is noise on a sales screen. */
+/* Streamlit's chrome is noise on a product screen. */
 #MainMenu, footer, header [data-testid="stStatusWidget"] {visibility:hidden;}
 [data-testid="stToolbar"], [data-testid="stDecoration"] {display:none !important;}
+
 /* Pin the canvas white. The old selector ("> .main") no longer matches modern
    Streamlit, so a visitor in dark mode got a near-black page under text that
    was coloured for a light one. No single ink passes contrast on both white
@@ -527,41 +533,12 @@ GATE_CSS = """
    the arrow glyph with the literal word "keyboard_arrow_right". */
 .stApp, .stApp p, .stApp label {
   font-family:'DM Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-}
-[data-testid="stMainBlockContainer"], .block-container {
-  max-width:640px !important; padding-top:2.2rem !important; padding-bottom:3rem !important;
+  color:#1B1033;
 }
 
-/* ---- brand header ----
-   The hero carries its OWN background and text colours rather than inheriting
-   the page's. Without that, a visitor whose Streamlit is in dark mode sees
-   near-black title text on a near-black page. Do not make these transparent. */
-.nyzhero{text-align:center;margin-bottom:26px;background:#F6F3FE;
-  border:1px solid #E4DEF7;border-radius:20px;padding:26px 20px 24px;}
-.nyzmark{width:62px;height:62px;margin:0 auto 16px;border-radius:18px;
-  background:#FFFFFF;border:1.5px solid #6D28D9;display:flex;align-items:center;
-  justify-content:center;}
-.nyzname{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:1.85rem;
-  color:#3B0F8F;letter-spacing:-.02em;line-height:1.15;margin-bottom:6px;}
-.nyzsub{color:#4A3D6B;font-size:.98rem;max-width:42ch;margin:0 auto;}
-
-/* ---- price band ---- */
-.nyzprice{background:linear-gradient(135deg,#6D28D9,#8B5CF6);border-radius:18px;
-  padding:24px 22px;text-align:center;color:#fff;margin:22px 0 10px;
-  box-shadow:0 16px 40px -18px rgba(109,40,217,.65);}
-.nyzamt{font-family:'Fraunces',serif;font-weight:700;font-size:2.9rem;line-height:1;}
-.nyzamt small{font-size:.95rem;font-weight:400;opacity:.9;margin-left:7px;
-  font-family:'DM Sans',sans-serif;}
-.nyzterms{font-size:.88rem;opacity:.94;margin-top:7px;}
-
-/* ---- trust row ---- */
-.nyztrust{display:flex;gap:9px;margin:14px 0 18px;flex-wrap:wrap;}
-.nyztrust div{flex:1 1 30%;background:#F6F3FE;border:1px solid #E4DEF7;
-  border-radius:11px;padding:11px 8px;text-align:center;}
-.nyztrust b{display:block;font-size:1.02rem;color:#6D28D9;font-weight:700;line-height:1.3;}
-/* #6B5E8A not #7A6D99: the lighter tone measured 4.28:1 on the lavender
-   card, under the 4.5:1 minimum for small text. This measures 5.34:1. */
-.nyztrust span{font-size:.7rem;color:#6B5E8A;text-transform:uppercase;letter-spacing:.05em;}
+/* Figures line up column-wise only with tabular figures. On a valuation
+   sheet every number is meant to be compared against the one above it. */
+.nyznum, .nyzfig, table.nyztbl td, table.nyztbl th {font-variant-numeric:tabular-nums;}
 
 /* ---- buttons ---- */
 [data-testid="stLinkButton"] a, [data-testid="stBaseLinkButton-primary"],
@@ -581,27 +558,115 @@ GATE_CSS = """
 
 /* Colours are pinned here, not left to the theme. config.toml sets
    primaryColor, but if that file is ever missing Streamlit falls back to its
-   default RED and the paid screen looks like a stranger's app. These rules
-   make the gate brand-correct on its own, in light or dark. */
+   default RED and the paid screen looks like a stranger's app. */
+/* The ' *' half matters. Streamlit wraps button text in its own <p>, and the
+   base ".stApp p" colour above would otherwise win there, leaving dark text
+   on the purple fill at 2.5:1. Colour the descendants, not just the button. */
+[data-testid^="stBaseButton-primary"],
+[data-testid^="stBaseButton-primary"] *,
+[data-testid^="stBaseLinkButton-primary"],
+[data-testid^="stBaseLinkButton-primary"] *,
+[data-testid="stLinkButton"] a[kind="primary"],
+[data-testid="stLinkButton"] a[kind="primary"] *{
+  color:#FFFFFF !important;
+}
 [data-testid^="stBaseButton-primary"],
 [data-testid^="stBaseLinkButton-primary"],
 [data-testid="stLinkButton"] a[kind="primary"]{
   /* border-color too: Streamlit outlines link buttons in primaryColor, which
      left a thin red ring around the purple Buy button. */
-  background:#6D28D9 !important; color:#FFFFFF !important;
-  border-color:#6D28D9 !important;
+  background:#6D28D9 !important; border-color:#6D28D9 !important;
 }
 [data-testid^="stBaseButton-secondary"],
 [data-testid^="stBaseLinkButton-secondary"],
 [data-testid="stLinkButton"] a[kind="secondary"]{
   border-radius:11px !important; font-weight:600 !important;
-  background:#FFFFFF !important; color:#4C1D95 !important;
-  border:1px solid #C6B9EC !important;
+  background:#FFFFFF !important; border:1px solid #C6B9EC !important;
+}
+[data-testid^="stBaseButton-secondary"],
+[data-testid^="stBaseButton-secondary"] *,
+[data-testid^="stBaseLinkButton-secondary"],
+[data-testid^="stBaseLinkButton-secondary"] *,
+[data-testid="stLinkButton"] a[kind="secondary"],
+[data-testid="stLinkButton"] a[kind="secondary"] *{
+  color:#4C1D95 !important;
 }
 
-/* ---- divider + section head ---- */
+/* ---- inputs ---- */
+[data-testid="stTextInputRootElement"], [data-testid="stNumberInputContainer"]{
+  border-radius:10px !important; border:1px solid #E4DEF7 !important;
+  background:#FBFAFF !important;
+}
+[data-testid="stTextInputRootElement"]:focus-within,
+[data-testid="stNumberInputContainer"]:focus-within{
+  border-color:#6D28D9 !important; box-shadow:0 0 0 3px rgba(109,40,217,.12) !important;
+}
+[data-testid="stNumberInputContainer"] input{font-variant-numeric:tabular-nums;}
+/* The steppers stay (they are useful on a phone) but stop competing with the
+   figure itself. */
+[data-testid="stNumberInputStepUp"], [data-testid="stNumberInputStepDown"]{
+  background:transparent !important; color:#8578A6 !important; border:none !important;
+}
+[data-testid="stNumberInputStepUp"]:hover, [data-testid="stNumberInputStepDown"]:hover{
+  color:#6D28D9 !important; background:#F2EEFD !important;
+}
+.stTextInput label, .stNumberInput label, .stSelectbox label{
+  font-size:.85rem !important; font-weight:500 !important; color:#4A3D6B !important;
+}
+[data-baseweb="select"] > div{
+  border-radius:10px !important; border-color:#E4DEF7 !important;
+  background:#FBFAFF !important;
+}
+[data-baseweb="select"] > div:focus-within{
+  border-color:#6D28D9 !important; box-shadow:0 0 0 3px rgba(109,40,217,.12) !important;
+}
+
+/* ---- expander + alerts ---- */
+[data-testid="stExpander"]{border:1px solid #E4DEF7 !important;border-radius:12px !important;
+  background:#FFFFFF !important;}
+[data-testid="stExpander"] summary{font-size:.88rem !important;color:#4A3D6B !important;}
+[data-testid="stAlert"]{border-radius:11px !important;}
+</style>
+"""
+
+GATE_CSS = """
+<style>
+[data-testid="stMainBlockContainer"], .block-container {
+  max-width:640px !important; padding-top:2.2rem !important; padding-bottom:3rem !important;
+}
+
+/* ---- brand header ----
+   The hero carries its OWN background and text colours rather than inheriting
+   the page's, so it survives a visitor whose Streamlit is in dark mode. */
+.nyzhero{text-align:center;margin-bottom:26px;background:#F6F3FE;
+  border:1px solid #E4DEF7;border-radius:20px;padding:26px 20px 24px;}
+.nyzmark{width:62px;height:62px;margin:0 auto 16px;border-radius:18px;
+  background:#FFFFFF;border:1.5px solid #6D28D9;display:flex;align-items:center;
+  justify-content:center;}
+.nyzname{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:1.85rem;
+  color:#3B0F8F;letter-spacing:-.02em;line-height:1.15;margin-bottom:6px;}
+.stApp .nyzsub{color:#4A3D6B;font-size:.98rem;max-width:42ch;margin:0 auto;}
+
+/* ---- price band ---- */
+.nyzprice{background:linear-gradient(135deg,#6D28D9,#8B5CF6);border-radius:18px;
+  padding:24px 22px;text-align:center;color:#fff;margin:22px 0 10px;
+  box-shadow:0 16px 40px -18px rgba(109,40,217,.65);}
+.nyzamt{font-family:'Fraunces',serif;font-weight:700;font-size:2.9rem;line-height:1;
+  font-variant-numeric:tabular-nums;}
+.nyzamt small{font-size:.95rem;font-weight:400;opacity:.9;margin-left:7px;
+  font-family:'DM Sans',sans-serif;}
+.nyzterms{font-size:.88rem;opacity:.94;margin-top:7px;}
+
+/* ---- trust row ---- */
+.nyztrust{display:flex;gap:9px;margin:14px 0 18px;flex-wrap:wrap;}
+.nyztrust div{flex:1 1 30%;background:#F6F3FE;border:1px solid #E4DEF7;
+  border-radius:11px;padding:11px 8px;text-align:center;}
+.nyztrust b{display:block;font-size:1.02rem;color:#6D28D9;font-weight:700;line-height:1.3;}
+.nyztrust span{font-size:.76rem;color:#6B5E8A;}
+
+/* ---- divider ---- */
 .nyzsep{display:flex;align-items:center;gap:13px;margin:30px 0 16px;
-  color:#7A6D99;font-size:.74rem;letter-spacing:.11em;text-transform:uppercase;font-weight:700;}
+  color:#6B5E8A;font-size:.86rem;font-weight:600;}
 .nyzsep:before,.nyzsep:after{content:"";flex:1;height:1px;background:#E4DEF7;}
 
 /* ---- form card ---- */
@@ -610,25 +675,11 @@ GATE_CSS = """
   border-radius:16px !important; padding:20px !important;
   box-shadow:0 12px 34px -20px rgba(76,29,149,.3) !important;
 }
-[data-testid="stTextInputRootElement"]{
-  border-radius:10px !important; border:1px solid #E4DEF7 !important;
-  background:#FBFAFF !important;
-}
-[data-testid="stTextInputRootElement"]:focus-within{
-  border-color:#6D28D9 !important; box-shadow:0 0 0 3px rgba(109,40,217,.12) !important;
-}
-.stTextInput label{font-size:.85rem !important;font-weight:500 !important;color:#4A3D6B !important;}
-
-/* ---- expander ---- */
-[data-testid="stExpander"]{border:1px solid #E4DEF7 !important;border-radius:12px !important;
-  background:#FFFFFF !important;}
-[data-testid="stExpander"] summary{font-size:.88rem !important;color:#4A3D6B !important;}
 
 /* ---- notes ---- */
-.nyzfine{font-size:.8rem;color:#7A6D99;text-align:center;margin-top:16px;line-height:1.65;}
-.nyzlegal{font-size:.73rem;color:#9086AD;text-align:center;margin-top:22px;
+.stApp .nyzfine{font-size:.8rem;color:#6B5E8A;text-align:center;margin-top:16px;line-height:1.65;}
+.stApp .nyzlegal{font-size:.73rem;color:#7A6D99;text-align:center;margin-top:22px;
   padding-top:16px;border-top:1px solid #EFEBFB;line-height:1.6;}
-[data-testid="stAlert"]{border-radius:11px !important;}
 
 @media (max-width:640px){
   .nyzamt{font-size:2.4rem;}
@@ -637,10 +688,18 @@ GATE_CSS = """
   .nyztrust{gap:6px;}
   .nyztrust div{flex:1 1 0;min-width:0;padding:9px 4px;}
   .nyztrust b{font-size:.94rem;}
-  .nyztrust span{font-size:.58rem;letter-spacing:.03em;}
+  .nyztrust span{font-size:.64rem;}
 }
 </style>
 """
+
+
+def theme(mode="app"):
+    """Inject the shared look, plus the gate layer when asked for it."""
+    st.markdown(BASE_CSS, unsafe_allow_html=True)
+    if mode == "gate":
+        st.markdown(GATE_CSS, unsafe_allow_html=True)
+
 
 LOGO_SVG = """<svg viewBox="0 0 48 48" fill="none" width="32" height="32">
   <path d="M13 34V14l12 13.5V14" stroke="#6D28D9" stroke-width="3.8"
@@ -657,7 +716,7 @@ def _gate(cfg, device, auto_id):
     defaults — an unbranded red-button screen after a payment reads as though
     the money went somewhere else.
     """
-    st.markdown(GATE_CSS, unsafe_allow_html=True)
+    theme("gate")
 
     st.markdown(
         f'<div class="nyzhero"><div class="nyzmark">{LOGO_SVG}</div>'
@@ -669,8 +728,8 @@ def _gate(cfg, device, auto_id):
     st.markdown(
         f'<div class="nyzprice"><div class="nyzamt">\u20B9{cfg["min_rupees"]:,.0f}'
         f'<small>one time</small></div>'
-        f'<div class="nyzterms">{cfg["valid_days"]} days of access \u00B7 '
-        f'up to {cfg["max_devices"]} devices \u00B7 nothing auto-renews</div></div>',
+        f'<div class="nyzterms">Yours for {cfg["valid_days"]} days on up to '
+        f'{cfg["max_devices"]} devices. Nothing renews by itself.</div></div>',
         unsafe_allow_html=True)
 
     st.markdown(
@@ -682,7 +741,7 @@ def _gate(cfg, device, auto_id):
 
     a, b = st.columns([2, 1])
     with a:
-        st.link_button(f"Buy for \u20B9{cfg['min_rupees']:,.0f}  \u2192", cfg["pay_url"],
+        st.link_button(f"Buy for \u20B9{cfg['min_rupees']:,.0f}", cfg["pay_url"],
                        use_container_width=True, type="primary")
     with b:
         if cfg["help_url"]:
@@ -765,5 +824,8 @@ def sidebar(data, cfg=None):
             st.rerun()
 
     st.markdown(
-        f"<div style='text-align:right;font-size:.72rem;opacity:.45;margin:-8px 0 6px'>"
-        f"Licensed to {data.get('email','')}</div>", unsafe_allow_html=True)
+        # No negative margin: it used to pull this line into the container's
+        # top padding, where it was clipped mid-glyph.
+        f"<div style='text-align:right;font-size:.74rem;color:#6B5E8A;"
+        f"margin:0 0 2px'>Licensed to {data.get('email','')}</div>",
+        unsafe_allow_html=True)
