@@ -508,34 +508,179 @@ def _grant(cfg, info):
     st.rerun()
 
 
-def _gate(cfg, device, auto_id):
-    st.markdown(f"## {cfg['product_name']}")
-    st.write(f"One payment of **₹{cfg['min_rupees']:,.0f}** gives access for "
-             f"**{cfg['valid_days']} days**, on up to **{cfg['max_devices']} devices**.")
+GATE_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');
 
-    a, b = st.columns(2)
+/* Streamlit's chrome is noise on a sales screen. */
+#MainMenu, footer, header [data-testid="stStatusWidget"] {visibility:hidden;}
+[data-testid="stToolbar"], [data-testid="stDecoration"] {display:none !important;}
+[data-testid="stAppViewContainer"] > .main {background:#FFFFFF;}
+
+/* Font is set on text elements only, never on bare spans. Streamlit draws its
+   icons as ligature text inside spans, so a blanket span rule would replace
+   the arrow glyph with the literal word "keyboard_arrow_right". */
+.stApp, .stApp p, .stApp label {
+  font-family:'DM Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
+[data-testid="stMainBlockContainer"], .block-container {
+  max-width:640px !important; padding-top:2.2rem !important; padding-bottom:3rem !important;
+}
+
+/* ---- brand header ---- */
+.nyzhero{text-align:center;margin-bottom:26px;}
+.nyzmark{width:62px;height:62px;margin:0 auto 16px;border-radius:18px;
+  background:#F6F3FE;border:1.5px solid #6D28D9;display:flex;align-items:center;
+  justify-content:center;}
+.nyzname{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:1.85rem;
+  color:#1B1033;letter-spacing:-.02em;line-height:1.15;margin-bottom:6px;}
+.nyzsub{color:#4A3D6B;font-size:.98rem;max-width:42ch;margin:0 auto;}
+
+/* ---- price band ---- */
+.nyzprice{background:linear-gradient(135deg,#6D28D9,#8B5CF6);border-radius:18px;
+  padding:24px 22px;text-align:center;color:#fff;margin:22px 0 10px;
+  box-shadow:0 16px 40px -18px rgba(109,40,217,.65);}
+.nyzamt{font-family:'Fraunces',serif;font-weight:700;font-size:2.9rem;line-height:1;}
+.nyzamt small{font-size:.95rem;font-weight:400;opacity:.9;margin-left:7px;
+  font-family:'DM Sans',sans-serif;}
+.nyzterms{font-size:.88rem;opacity:.94;margin-top:7px;}
+
+/* ---- trust row ---- */
+.nyztrust{display:flex;gap:9px;margin:14px 0 18px;flex-wrap:wrap;}
+.nyztrust div{flex:1 1 30%;background:#F6F3FE;border:1px solid #E4DEF7;
+  border-radius:11px;padding:11px 8px;text-align:center;}
+.nyztrust b{display:block;font-size:1.02rem;color:#6D28D9;font-weight:700;line-height:1.3;}
+.nyztrust span{font-size:.7rem;color:#7A6D99;text-transform:uppercase;letter-spacing:.05em;}
+
+/* ---- buttons ---- */
+[data-testid="stLinkButton"] a, [data-testid="stBaseLinkButton-primary"],
+[data-testid="stBaseLinkButton-secondary"]{
+  border-radius:11px !important; padding:13px 18px !important;
+  font-weight:700 !important; font-size:.95rem !important; border-width:1px !important;
+}
+[data-testid="stBaseButton-primary"]{
+  border-radius:11px !important; padding:13px 18px !important; font-weight:700 !important;
+  font-size:.95rem !important; border:none !important;
+  box-shadow:0 10px 26px -12px rgba(109,40,217,.7) !important;
+}
+[data-testid="stBaseButton-primary"]:hover{filter:brightness(1.07);}
+[data-testid="stBaseButton-secondary"]{border-radius:11px !important;font-weight:600 !important;}
+
+/* ---- divider + section head ---- */
+.nyzsep{display:flex;align-items:center;gap:13px;margin:30px 0 16px;
+  color:#7A6D99;font-size:.74rem;letter-spacing:.11em;text-transform:uppercase;font-weight:700;}
+.nyzsep:before,.nyzsep:after{content:"";flex:1;height:1px;background:#E4DEF7;}
+
+/* ---- form card ---- */
+[data-testid="stForm"]{
+  background:#FFFFFF !important; border:1px solid #E4DEF7 !important;
+  border-radius:16px !important; padding:20px !important;
+  box-shadow:0 12px 34px -20px rgba(76,29,149,.3) !important;
+}
+[data-testid="stTextInputRootElement"]{
+  border-radius:10px !important; border:1px solid #E4DEF7 !important;
+  background:#FBFAFF !important;
+}
+[data-testid="stTextInputRootElement"]:focus-within{
+  border-color:#6D28D9 !important; box-shadow:0 0 0 3px rgba(109,40,217,.12) !important;
+}
+.stTextInput label{font-size:.85rem !important;font-weight:500 !important;color:#4A3D6B !important;}
+
+/* ---- expander ---- */
+[data-testid="stExpander"]{border:1px solid #E4DEF7 !important;border-radius:12px !important;
+  background:#FFFFFF !important;}
+[data-testid="stExpander"] summary{font-size:.88rem !important;color:#4A3D6B !important;}
+
+/* ---- notes ---- */
+.nyzfine{font-size:.8rem;color:#7A6D99;text-align:center;margin-top:16px;line-height:1.65;}
+.nyzlegal{font-size:.73rem;color:#9086AD;text-align:center;margin-top:22px;
+  padding-top:16px;border-top:1px solid #EFEBFB;line-height:1.6;}
+[data-testid="stAlert"]{border-radius:11px !important;}
+
+@media (max-width:640px){
+  .nyzamt{font-size:2.4rem;}
+  /* Keep the three stats on one row on a phone. Stacking them pushed the
+     Buy button below the fold. min-width:0 lets them shrink instead. */
+  .nyztrust{gap:6px;}
+  .nyztrust div{flex:1 1 0;min-width:0;padding:9px 4px;}
+  .nyztrust b{font-size:.94rem;}
+  .nyztrust span{font-size:.58rem;letter-spacing:.03em;}
+}
+</style>
+"""
+
+LOGO_SVG = """<svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+  <path d="M13 34V14l12 13.5V14" stroke="#6D28D9" stroke-width="3.8"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="30" y="20" width="4" height="14" rx="1.6" fill="#8B5CF6"/>
+  <rect x="36.5" y="25" width="4" height="9" rx="1.6" fill="#C4B5FD"/>
+</svg>"""
+
+
+def _gate(cfg, device, auto_id):
+    """
+    The purchase screen. This is the first thing a buyer sees after paying, so
+    it is styled to match the landing page rather than left on Streamlit's
+    defaults — an unbranded red-button screen after a payment reads as though
+    the money went somewhere else.
+    """
+    st.markdown(GATE_CSS, unsafe_allow_html=True)
+
+    st.markdown(
+        f'<div class="nyzhero"><div class="nyzmark">{LOGO_SVG}</div>'
+        f'<div class="nyzname">{cfg["product_name"]}</div>'
+        f'<p class="nyzsub">Value any NSE or BSE stock five ways, against benchmark '
+        f'multiples for 28 Indian industries.</p></div>',
+        unsafe_allow_html=True)
+
+    st.markdown(
+        f'<div class="nyzprice"><div class="nyzamt">\u20B9{cfg["min_rupees"]:,.0f}'
+        f'<small>one time</small></div>'
+        f'<div class="nyzterms">{cfg["valid_days"]} days of access \u00B7 '
+        f'up to {cfg["max_devices"]} devices \u00B7 nothing auto-renews</div></div>',
+        unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="nyztrust">'
+        '<div><b>5</b><span>Methods</span></div>'
+        '<div><b>28</b><span>Industries</span></div>'
+        '<div><b>Instant</b><span>Unlock</span></div>'
+        '</div>', unsafe_allow_html=True)
+
+    a, b = st.columns([2, 1])
     with a:
-        st.link_button(f"Buy for ₹{cfg['min_rupees']:,.0f} →", cfg["pay_url"],
+        st.link_button(f"Buy for \u20B9{cfg['min_rupees']:,.0f}  \u2192", cfg["pay_url"],
                        use_container_width=True, type="primary")
     with b:
         if cfg["help_url"]:
             st.link_button("Need help?", cfg["help_url"], use_container_width=True)
 
-    st.divider()
-    st.markdown("#### Already paid? Unlock here")
+    st.markdown('<div class="nyzsep">Already paid</div>', unsafe_allow_html=True)
 
     with st.form("nyz_unlock"):
         email = st.text_input("Email you paid with", placeholder="you@example.com")
         pid = st.text_input("Payment ID", value=auto_id or "",
-                            placeholder="pay_XXXXXXXXXXXX",
-                            help="In your Razorpay confirmation email. Starts with pay_")
-        go = st.form_submit_button("Unlock", type="primary", use_container_width=True)
+                            placeholder="pay_XXXXXXXXXXXX")
+        go = st.form_submit_button("Unlock my access", type="primary",
+                                   use_container_width=True)
 
     with st.expander("I have a free pass"):
         with st.form("nyz_comp"):
             ce = st.text_input("Email")
             cw = st.text_input("Secret word", type="password")
             cgo = st.form_submit_button("Use free pass", use_container_width=True)
+
+    st.markdown(
+        '<p class="nyzfine">Your Payment ID starts with <b>pay_</b> and is in the '
+        'confirmation email from Razorpay. Paying through the button above brings '
+        'you straight back here and unlocks the tool automatically.</p>',
+        unsafe_allow_html=True)
+
+    st.markdown(
+        '<p class="nyzlegal">Educational tool. It performs arithmetic on figures you '
+        'supply and does not verify them or fetch market data. Not investment advice, '
+        'not a recommendation, not a price target. NYZTrade is not a SEBI-registered '
+        'investment adviser.</p>', unsafe_allow_html=True)
 
     if cgo:
         if comp_ok(ce, cw):
@@ -561,9 +706,6 @@ def _gate(cfg, device, auto_id):
             st.error(msg)
             return
         _grant(cfg, info)
-
-    st.caption("Your Payment ID is in the confirmation email from Razorpay. "
-               "If you cannot find it, use the help link above.")
 
 
 def sidebar(data, cfg=None):
