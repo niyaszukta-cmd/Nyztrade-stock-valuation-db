@@ -25,6 +25,7 @@ comp passes, and a "Licensed to" watermark.
 import base64
 import hashlib
 import hmac
+import html as _html
 import json
 import os
 import tempfile
@@ -991,6 +992,69 @@ def _gate(cfg, device, auto_id):
         _grant(cfg, info)
 
 
+def _account_lines(data, cfg):
+    """The one description of an account, used by every place that shows it."""
+    out = []
+    exp = data.get("expires_at")
+    if data.get("trial"):
+        left = trial_left(cfg, data.get("email"))
+        out.append("Free trial" if left is None
+                   else f"Free trial \u2014 {left} of {cfg['trial_runs']} "
+                        "valuations left this month")
+    elif data.get("comp"):
+        out.append("Free pass")
+    elif exp:
+        days = int((exp - time.time()) / 86400)
+        out.append(f"Access until {datetime.fromtimestamp(exp, IST):%d %b %Y} "
+                   f"({days} days left)")
+    return out
+
+
+def sign_out(cfg, data):
+    """Drop this session. A paid sign-out also frees the device slot, which is
+    how someone moves the purchase to a new machine; a trial or comp pass never
+    took a slot, so there is nothing to give back."""
+    if not data.get("comp") and not data.get("trial"):
+        device_forget(cfg, data.get("ref"), st.session_state.get("nyz_device"))
+    st.session_state.pop("nyz_token", None)
+    st.session_state["nyz_do_clear"] = True
+    st.rerun()
+
+
+def account_menu(data, cfg=None):
+    """Account and sign-out, for the top of the page.
+
+    The sidebar starts collapsed, so the sign-out button that lived only in
+    there was effectively hidden. This renders the same thing where it can
+    actually be seen.
+    """
+    if not data:
+        return
+    cfg = cfg or config()
+    email = data.get("email", "")
+
+    # st.popover keeps the header to one control instead of a loose button,
+    # and makes signing out deliberate rather than a stray click. Older
+    # Streamlit versions fall back to a plain button.
+    if hasattr(st, "popover"):
+        with st.popover("Account", use_container_width=True):
+            # Plain text, not markdown: Streamlit turns a bare address into a
+            # mailto link, which looks clickable and does nothing useful here.
+            st.markdown(
+                f'<div style="font-weight:700;word-break:break-all">'
+                f'{_html.escape(email)}</div>', unsafe_allow_html=True)
+            for line in _account_lines(data, cfg):
+                st.caption(line)
+            if not data.get("comp") and not data.get("trial"):
+                st.caption("Signing out frees this device, so you can use the "
+                           "purchase somewhere else.")
+            if st.button("Sign out", use_container_width=True, key="nyz_out_hdr"):
+                sign_out(cfg, data)
+    else:
+        if st.button("Sign out", use_container_width=True, key="nyz_out_hdr"):
+            sign_out(cfg, data)
+
+
 def sidebar(data, cfg=None):
     """Account box plus the licence watermark."""
     if not data:
@@ -999,24 +1063,11 @@ def sidebar(data, cfg=None):
     with st.sidebar:
         st.markdown("### Account")
         st.caption(data.get("email", ""))
-        exp = data.get("expires_at")
-        if exp:
-            left = int((exp - time.time()) / 86400)
-            st.caption(f"Access until {datetime.fromtimestamp(exp, IST):%d %b %Y} "
-                       f"({left} days left)")
-        if data.get("comp"):
-            st.caption("Free pass")
-        if data.get("trial"):
-            left = trial_left(cfg, data.get("email"))
-            st.caption("Free trial" if left is None
-                       else f"Free — {left} of {cfg['trial_runs']} left this month")
-        if st.button("Sign out", use_container_width=True):
-            if not data.get("comp") and not data.get("trial"):
-                device_forget(cfg, data.get("ref"),
-                              st.session_state.get("nyz_device"))
-            st.session_state.pop("nyz_token", None)
-            st.session_state["nyz_do_clear"] = True
-            st.rerun()
+        for line in _account_lines(data, cfg):
+            st.caption(line)
+        # No sign-out button here. It lives in the header now, and two controls
+        # with the same label is one more thing to keep in step.
+        st.caption("Sign out from the Account menu at the top of the page.")
 
     st.markdown(
         # No negative margin: it used to pull this line into the container's
