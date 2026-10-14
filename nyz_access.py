@@ -64,6 +64,8 @@ def config():
         "key_id": _sec("razorpay_key_id"),
         "key_secret": _sec("razorpay_key_secret"),
         "pay_url": _sec("pay_url"),
+        # Free valuations before payment. 0 turns the trial off entirely.
+        "trial_runs": int(_sec("trial_runs", 3) or 0),
         "help_url": _sec("help_url", ""),
         "min_rupees": float(_sec("pro_min_amount_rupees", 0) or 0),
         "valid_days": int(_sec("pro_valid_days", 180) or 180),
@@ -406,6 +408,69 @@ def device_check(cfg, payment_ref, device, email):
     return True, len(known) + 1, ""
 
 
+# ---------------------------------------------------------------------------
+# Free trial
+#
+# Keyed on the EMAIL, not the device. The device id is minted in the browser
+# ("d_" + a random number in localStorage), so a device-keyed trial restarts
+# the moment someone clears site data. An email is the smallest thing the
+# person carries between browsers.
+#
+# No new table: each use is one row in pyqoo_devices under a trial ref, so the
+# number of rows IS the number of valuations used. Counting rows server-side
+# means the tally cannot be edited from the browser.
+#
+# A throwaway email still gets a fresh trial. That is the residual hole, and
+# closing it needs emailed one-time codes, which is a bigger build.
+# ---------------------------------------------------------------------------
+TRIAL_PREFIX = "nyzvaltrial:"
+
+
+def trial_ref(email):
+    return TRIAL_PREFIX + (email or "").strip().lower()
+
+
+def trial_used(cfg, email):
+    """Valuations already spent, or None when the database cannot be reached."""
+    if not cfg.get("supabase_url"):
+        return None
+    base = f"{cfg['supabase_url']}/rest/v1/pyqoo_devices"
+    try:
+        r = requests.get(base, headers=_sb_headers(cfg), timeout=6,
+                         params={"ref": f"eq.{trial_ref(email)}", "select": "device"})
+        if r.status_code >= 300:
+            return None
+        return len(r.json() or [])
+    except Exception:
+        return None
+
+
+def trial_consume(cfg, email, device=""):
+    """Record one used valuation. False only when the write itself failed."""
+    if not cfg.get("supabase_url"):
+        return False
+    base = f"{cfg['supabase_url']}/rest/v1/pyqoo_devices"
+    try:
+        r = requests.post(base, headers=_sb_headers(cfg), timeout=6,
+                          json={"ref": trial_ref(email),
+                                "device": uuid.uuid4().hex,
+                                "email": (email or "").strip().lower()})
+        return r.status_code < 300
+    except Exception:
+        return False
+
+
+def trial_left(cfg, email):
+    """How many runs remain. None means 'cannot tell' — callers allow the run."""
+    cap = int(cfg.get("trial_runs") or 0)
+    if cap <= 0:
+        return 0
+    used = trial_used(cfg, email)
+    if used is None:
+        return None
+    return max(0, cap - used)
+
+
 def device_forget(cfg, payment_ref, device):
     """Remove this device on sign-out, freeing a slot."""
     if not cfg["supabase_url"] or not cfg["supabase_key"] or not device:
@@ -474,6 +539,11 @@ def require_access():
         data = unsign(token, cfg["session_secret"])
         if data and time.time() < data.get("expires_at", 0):
             if data.get("comp"):
+                SS["nyz_token"] = token
+                return data
+            if data.get("trial"):
+                # No payment to verify. The cap is enforced per valuation in
+                # the app, against Supabase, not here.
                 SS["nyz_token"] = token
                 return data
             p, err = fetch_payment(data.get("ref"), cfg["key_id"],
@@ -833,6 +903,18 @@ def _gate(cfg, device, auto_id):
         go = st.form_submit_button("Unlock my access", type="primary",
                                    use_container_width=True)
 
+    if cfg.get("trial_runs", 0) > 0:
+        with st.expander(f"Try it free — {cfg['trial_runs']} valuations"):
+            with st.form("nyz_trial"):
+                te = st.text_input("Your email", placeholder="you@example.com",
+                                   key="nyz_trial_email")
+                tgo = st.form_submit_button("Start my free valuations",
+                                            use_container_width=True)
+            st.caption("No payment, no card. The count is kept against your email, "
+                       "so it follows you between browsers.")
+    else:
+        te, tgo = "", False
+
     with st.expander("I have a free pass"):
         with st.form("nyz_comp"):
             ce = st.text_input("Email")
@@ -850,6 +932,22 @@ def _gate(cfg, device, auto_id):
         'supply and does not verify them or fetch market data. Not investment advice, '
         'not a recommendation, not a price target. NYZTrade is not a SEBI-registered '
         'investment adviser.</p>', unsafe_allow_html=True)
+
+    if tgo:
+        addr = (te or "").strip().lower()
+        if "@" not in addr or "." not in addr.split("@")[-1]:
+            st.error("Please enter an email address so the free runs can be counted.")
+        else:
+            left = trial_left(cfg, addr)
+            if left == 0:
+                st.error(
+                    f"This email has already used its {cfg['trial_runs']} free "
+                    "valuations. Buying below unlocks the tool without a limit.")
+            else:
+                now = int(time.time())
+                _grant(cfg, {"ref": trial_ref(addr), "email": addr, "amount": 0,
+                             "created_at": now, "expires_at": now + 365 * 86400,
+                             "comp": False, "trial": True})
 
     if cgo:
         if comp_ok(ce, cw):
@@ -892,8 +990,12 @@ def sidebar(data, cfg=None):
                        f"({left} days left)")
         if data.get("comp"):
             st.caption("Free pass")
+        if data.get("trial"):
+            left = trial_left(cfg, data.get("email"))
+            st.caption("Free trial" if left is None
+                       else f"Free trial — {left} of {cfg['trial_runs']} left")
         if st.button("Sign out", use_container_width=True):
-            if not data.get("comp"):
+            if not data.get("comp") and not data.get("trial"):
                 device_forget(cfg, data.get("ref"),
                               st.session_state.get("nyz_device"))
             st.session_state.pop("nyz_token", None)
