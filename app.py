@@ -15,7 +15,8 @@ import re
 
 import streamlit as st
 
-from nyz_access import require_access, sidebar, config, theme, LOGO_SVG
+from nyz_access import (require_access, sidebar, config, theme, LOGO_SVG,
+                        trial_left, trial_consume)
 
 st.set_page_config(page_title="NYZTrade Valuation Desk", page_icon="📊",
                    layout="wide", initial_sidebar_state="collapsed")
@@ -39,6 +40,15 @@ st.markdown("""
    short of the page width. */
 .nyzbar{display:flex;align-items:center;gap:13px;}
 .nyzrule{height:1px;background:var(--bd);margin:10px 0 22px;}
+.nyztrial{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  flex-wrap:wrap;background:var(--s3);border:1px solid var(--bd2);border-radius:14px;
+  padding:12px 16px;margin-bottom:20px;font-size:.97rem;color:var(--ink2);}
+.nyztrial b{color:var(--brandink);}
+.nyztrial a{background:var(--brand);color:var(--onbrand) !important;text-decoration:none;
+  border-radius:10px;padding:9px 15px;font-weight:700;font-size:.93rem;white-space:nowrap;}
+.nyztrial.out{background:var(--brand);border-color:var(--brand);color:var(--onbrand);}
+.nyztrial.out b{color:var(--onbrand);}
+.nyztrial.out a{background:var(--s1);color:var(--brandink) !important;}
 .nyzbar .mk{width:42px;height:42px;border-radius:13px;background:var(--s3);
   border:1.5px solid var(--brand);color:var(--logo);display:flex;align-items:center;justify-content:center;
   flex:0 0 auto;}
@@ -346,6 +356,29 @@ with _ctrl:
     st.toggle("Dark mode", key="nyz_dark")
 st.markdown('<div class="nyzrule"></div>', unsafe_allow_html=True)
 
+# ---------------------------------------------------------------------------
+# Free trial. The count lives in Supabase against the buyer's email, so it is
+# not something the browser can reset. Read once per run and reuse, rather
+# than querying again inside the result branch.
+# ---------------------------------------------------------------------------
+IS_TRIAL = bool(BUYER.get("trial"))
+TRIAL_LEFT = trial_left(CFG, BUYER.get("email")) if IS_TRIAL else None
+
+if IS_TRIAL:
+    if TRIAL_LEFT is None:
+        _msg = "You are on the free trial."
+    elif TRIAL_LEFT > 0:
+        _msg = (f"Free trial \u2014 <b>{TRIAL_LEFT}</b> of {CFG['trial_runs']} "
+                f"valuations left.")
+    else:
+        _msg = (f"You have used all {CFG['trial_runs']} free valuations.")
+    st.markdown(
+        f'<div class="nyztrial{"" if (TRIAL_LEFT is None or TRIAL_LEFT > 0) else " out"}">'
+        f'<span>{_msg}</span>'
+        f'<a href="{CFG["pay_url"]}" target="_blank" rel="noopener">'
+        f'Unlock everything \u2014 \u20B9{CFG["min_rupees"]:,.0f}</a></div>',
+        unsafe_allow_html=True)
+
 left, right = st.columns([1, 1], gap="large")
 
 with left:
@@ -453,6 +486,19 @@ with right:
         if mode != "all":
             res = {k: (v if k == mode else None) for k, v in res.items()}
 
+        # A trial run is spent only when a fair value really appears, and the
+        # row goes in BEFORE the number is shown — if the write fails, the run
+        # is refused rather than given away.
+        if IS_TRIAL and TRIAL_LEFT is not None and TRIAL_LEFT <= 0:
+            st.markdown(
+                '<div class="nyzempty"><b>Your free valuations are used up</b>'
+                f'<span>All {CFG["trial_runs"]} are spent. Unlocking removes the '
+                'limit and keeps everything you have entered.</span></div>',
+                unsafe_allow_html=True)
+            st.link_button(f"Unlock for \u20B9{CFG['min_rupees']:,.0f}",
+                           CFG["pay_url"], use_container_width=True, type="primary")
+            st.stop()
+
         live = {k: v for k, v in res.items() if pos(v)}
         if not live:
             st.markdown(
@@ -461,6 +507,12 @@ with right:
                    else "No method could run. Try an EPS with a target P/E.")
                 + '</span></div>', unsafe_allow_html=True)
         else:
+            if IS_TRIAL:
+                if not trial_consume(CFG, BUYER.get("email")):
+                    st.warning("Could not reach the licence service, so this free "
+                               "valuation was not started. Please try again.")
+                    st.stop()
+
             total_w = sum(METHODS[k][1] for k in live)
             fv = sum(v * METHODS[k][1] / total_w for k, v in live.items())
             fv *= (1 - mos / 100)
