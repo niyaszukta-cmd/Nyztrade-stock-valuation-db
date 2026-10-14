@@ -275,6 +275,47 @@ def scale_html(price, fv, marker):
     )
 
 
+# ---------------------------------------------------------------------------
+# Hand-off from the free calculator on nyztrade.in
+#
+# The free page appends the figures already on screen to this app's URL, so a
+# buyer arriving here does not retype them. Figures only: no token, no email,
+# nothing that identifies anyone. A bad or missing value just falls back to the
+# normal default, so a mangled link degrades to an empty form rather than an
+# error page.
+# ---------------------------------------------------------------------------
+def _q(name):
+    try:
+        val = st.query_params.get(name)
+    except Exception:
+        return None
+    if isinstance(val, list):
+        val = val[0] if val else None
+    return val
+
+
+def q_num(name, default=0.0):
+    raw = _q(name)
+    if raw in (None, ""):
+        return float(default)
+    try:
+        out = float(raw)
+    except (TypeError, ValueError):
+        return float(default)
+    return out if math.isfinite(out) else float(default)
+
+
+def q_pick(name, options, default_index=0):
+    """Index of the option named in the URL, or the default if it isn't one."""
+    raw = _q(name)
+    if raw in (None, ""):
+        return default_index
+    try:
+        return list(options).index(raw)
+    except ValueError:
+        return default_index
+
+
 def table(headers, rows, right=()):
     """rows: list of lists. `right` holds the indexes to right-align."""
     th = "".join(f'<th class="{"r" if i in right else ""}">{h}</th>'
@@ -310,11 +351,17 @@ left, right = st.columns([1, 1], gap="large")
 with left:
     st.markdown('<div class="nyzstep"><i>1</i><h2>The company</h2></div>',
                 unsafe_allow_html=True)
-    name = st.text_input("Company", placeholder="e.g. Infosys")
+    name = st.text_input("Company", value=_q("name") or "", placeholder="e.g. Infosys")
     c1, c2 = st.columns(2)
-    industry = c1.selectbox("Industry", sorted(BENCH),
-                            index=sorted(BENCH).index("Information Technology"))
-    cap = c2.selectbox("Size", list(CAPM))
+    _inds = sorted(BENCH)
+    industry = c1.selectbox(
+        "Industry", _inds,
+        index=q_pick("ind", _inds, _inds.index("Information Technology")))
+    # The free page sends "Large"/"Mid"/"Small"; this app labels them
+    # "Large cap" and so on, so match on the first word.
+    _caps = list(CAPM)
+    _cap_short = [c.split()[0] for c in _caps]
+    cap = c2.selectbox("Size", _caps, index=q_pick("cap", _cap_short, 0))
 
     b_pe, b_pb, b_ev = BENCH[industry]
     m1, m2, m3 = CAPM[cap]
@@ -331,9 +378,10 @@ with left:
 
     st.markdown('<div class="nyzstep"><i>2</i><h2>Choose a method</h2></div>',
                 unsafe_allow_html=True)
+    _modes = ["all", "pe", "ipe", "pb", "ev", "gr"]
     mode = st.selectbox(
-        "Valuation method",
-        ["all", "pe", "ipe", "pb", "ev", "gr"],
+        "Valuation method", _modes,
+        index=q_pick("m", _modes, 0),
         format_func=lambda k: ("All five, blended" if k == "all"
                                else METHODS[k][0]))
     st.markdown(f'<div class="nyznote">{md_b(NOTE[mode])}</div>',
@@ -347,37 +395,41 @@ with left:
         return bool(key_set & need)
 
     price = st.number_input("Market price ₹/share", min_value=0.0, step=0.01,
-                            format="%.2f")
+                            value=q_num("price"), format="%.2f")
     eps = bvps = shares = ebitda = ndebt = 0.0
     t_pe = t_ipe = t_pb = t_ev = 0.0
 
     if show({"pe", "ipe", "gr"}):
         eps = st.number_input("EPS ₹/share (TTM)", min_value=0.0, step=0.01,
-                              format="%.2f")
+                              value=q_num("eps"), format="%.2f")
     if show({"pb", "gr"}):
         bvps = st.number_input("Book value ₹/share", min_value=0.0, step=0.01,
-                               format="%.2f")
+                               value=q_num("bvps"), format="%.2f")
     if show({"ev"}):
         cc1, cc2 = st.columns(2)
         shares = cc1.number_input("Shares (crore)", min_value=0.0, step=0.01,
-                                  format="%.2f")
+                                  value=q_num("shares"), format="%.2f")
         ebitda = cc2.number_input("EBITDA (₹ crore)", min_value=0.0, step=1.0,
-                                  format="%.1f")
+                                  value=q_num("ebitda"), format="%.1f")
         ndebt = st.number_input("Net debt (₹ crore, negative if net cash)",
-                                step=1.0, format="%.1f")
+                                value=q_num("ndebt"), step=1.0, format="%.1f")
 
     st.markdown('<div class="nyzstep"><i>4</i><h2>Multiples and safety margin</h2></div>',
                 unsafe_allow_html=True)
     if show({"pe"}):
-        t_pe = st.number_input("Your target P/E", min_value=0.0, value=float(d_pe), step=0.1)
+        t_pe = st.number_input("Your target P/E", min_value=0.0,
+                               value=q_num("tpe", d_pe), step=0.1)
     if show({"ipe"}):
-        t_ipe = st.number_input("Industry P/E", min_value=0.0, value=float(d_pe), step=0.1)
+        t_ipe = st.number_input("Industry P/E", min_value=0.0,
+                                value=q_num("ipe", d_pe), step=0.1)
     if show({"pb"}):
-        t_pb = st.number_input("Target P/B", min_value=0.0, value=float(d_pb), step=0.05)
+        t_pb = st.number_input("Target P/B", min_value=0.0,
+                               value=q_num("tpb", d_pb), step=0.05)
     if show({"ev"}):
-        t_ev = st.number_input("Target EV/EBITDA", min_value=0.0, value=float(d_ev), step=0.1)
+        t_ev = st.number_input("Target EV/EBITDA", min_value=0.0,
+                               value=q_num("tev", d_ev), step=0.1)
     mos = st.number_input("Margin of safety %", min_value=0.0, max_value=60.0,
-                          value=15.0, step=5.0)
+                          value=min(60.0, max(0.0, q_num("mos", 15.0))), step=5.0)
 
     go = st.button("Value this stock", type="primary", use_container_width=True)
 
