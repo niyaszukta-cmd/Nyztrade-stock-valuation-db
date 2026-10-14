@@ -368,10 +368,11 @@ if IS_TRIAL:
     if TRIAL_LEFT is None:
         _msg = "You are on the free trial."
     elif TRIAL_LEFT > 0:
-        _msg = (f"Free trial \u2014 <b>{TRIAL_LEFT}</b> of {CFG['trial_runs']} "
-                f"valuations left.")
+        _msg = (f"Free this month \u2014 <b>{TRIAL_LEFT}</b> of "
+                f"{CFG['trial_runs']} valuations left.")
     else:
-        _msg = (f"You have used all {CFG['trial_runs']} free valuations.")
+        _msg = (f"You have used all {CFG['trial_runs']} free valuations for "
+                f"this month. They refill on the 1st.")
     st.markdown(
         f'<div class="nyztrial{"" if (TRIAL_LEFT is None or TRIAL_LEFT > 0) else " out"}">'
         f'<span>{_msg}</span>'
@@ -492,8 +493,9 @@ with right:
         if IS_TRIAL and TRIAL_LEFT is not None and TRIAL_LEFT <= 0:
             st.markdown(
                 '<div class="nyzempty"><b>Your free valuations are used up</b>'
-                f'<span>All {CFG["trial_runs"]} are spent. Unlocking removes the '
-                'limit and keeps everything you have entered.</span></div>',
+                f'<span>All {CFG["trial_runs"]} for this month are spent. They '
+                'refill on the 1st, or unlocking removes the limit now and keeps '
+                'everything you have entered.</span></div>',
                 unsafe_allow_html=True)
             st.link_button(f"Unlock for \u20B9{CFG['min_rupees']:,.0f}",
                            CFG["pay_url"], use_container_width=True, type="primary")
