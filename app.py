@@ -16,7 +16,7 @@ import re
 import streamlit as st
 
 from nyz_access import (require_access, sidebar, config, theme, LOGO_SVG,
-                        trial_left, trial_consume)
+                        trial_left, trial_consume, account_menu)
 
 st.set_page_config(page_title="NYZTrade Valuation Desk", page_icon="📊",
                    layout="wide", initial_sidebar_state="collapsed")
@@ -341,7 +341,7 @@ def table(headers, rows, right=()):
 # ---------------------------------------------------------------------------
 # UI
 # ---------------------------------------------------------------------------
-_head, _ctrl = st.columns([5, 1], vertical_alignment="center")
+_head, _ctrl, _acct = st.columns([5, 1.25, 1.1], vertical_alignment="center")
 with _head:
     st.markdown(
         f'<div class="nyzbar"><div class="mk">{LOGO_SVG}</div><div>'
@@ -354,6 +354,10 @@ with _ctrl:
     # to session_state before it reruns, so the repaint is immediate, not a
     # render behind.
     st.toggle("Dark mode", key="nyz_dark")
+with _acct:
+    # Sign-out used to live only in the sidebar, which opens collapsed — so in
+    # practice there was no way out of the app. It belongs up here.
+    account_menu(BUYER, CFG)
 st.markdown('<div class="nyzrule"></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
