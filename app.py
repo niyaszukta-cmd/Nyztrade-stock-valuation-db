@@ -34,111 +34,114 @@ st.markdown("""
 }
 
 /* ---- masthead ---- */
-.nyzbar{display:flex;align-items:center;gap:13px;padding-bottom:16px;
-  border-bottom:1px solid #EDE8FB;margin-bottom:22px;}
-.nyzbar .mk{width:42px;height:42px;border-radius:13px;background:#F6F3FE;
-  border:1.5px solid #6D28D9;display:flex;align-items:center;justify-content:center;
+/* The rule is a separate element, not a border on .nyzbar: the masthead now
+   shares a column row with the theme toggle, so a border here would stop
+   short of the page width. */
+.nyzbar{display:flex;align-items:center;gap:13px;}
+.nyzrule{height:1px;background:var(--bd);margin:10px 0 22px;}
+.nyzbar .mk{width:42px;height:42px;border-radius:13px;background:var(--s3);
+  border:1.5px solid var(--brand);color:var(--logo);display:flex;align-items:center;justify-content:center;
   flex:0 0 auto;}
 .nyzbar .mk svg{width:24px;height:24px;}
-.nyzbar h1{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:1.55rem;
-  color:#1B1033;margin:0;line-height:1.1;letter-spacing:-.02em;}
-.stApp .nyzbar p{margin:2px 0 0;font-size:.88rem;color:#4A3D6B;max-width:62ch;}
+.nyzbar h1{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:1.72rem;
+  color:var(--ink);margin:0;line-height:1.1;letter-spacing:-.02em;}
+.stApp .nyzbar p{margin:2px 0 0;font-size:.97rem;color:var(--ink2);max-width:62ch;}
 
 /* ---- numbered steps. The form genuinely is a sequence, so the numbers
    carry information rather than decoration. ---- */
 .nyzstep{display:flex;align-items:center;gap:10px;margin:26px 0 12px;}
 .nyzstep:first-of-type{margin-top:4px;}
-.nyzstep i{flex:0 0 auto;width:25px;height:25px;border-radius:8px;background:#6D28D9;
-  color:#fff;font-style:normal;font-weight:700;font-size:.82rem;display:flex;
+.nyzstep i{flex:0 0 auto;width:25px;height:25px;border-radius:8px;background:var(--brand);
+  color:var(--onbrand);font-style:normal;font-weight:700;font-size:.9rem;display:flex;
   align-items:center;justify-content:center;}
-.nyzstep h2{margin:0;font-size:1.03rem;font-weight:700;color:#1B1033;letter-spacing:-.01em;}
+.nyzstep h2{margin:0;font-size:1.14rem;font-weight:700;color:var(--ink);letter-spacing:-.01em;}
 
 /* ---- benchmark pills ---- */
 .nyzpills{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 2px;}
-.nyzpills span{background:#F6F3FE;border:1px solid #E4DEF7;border-radius:999px;
-  padding:5px 11px;font-size:.8rem;color:#4A3D6B;font-variant-numeric:tabular-nums;}
-.nyzpills span b{color:#4C1D95;font-weight:700;}
-.stApp .nyzbenchlead{font-size:.84rem;color:#4A3D6B;margin:4px 0 0;}
+.nyzpills span{background:var(--s3);border:1px solid var(--bd);border-radius:999px;
+  padding:6px 12px;font-size:.88rem;color:var(--ink2);font-variant-numeric:tabular-nums;}
+.nyzpills span b{color:var(--brandink);font-weight:700;}
+.stApp .nyzbenchlead{font-size:.93rem;color:var(--ink2);margin:4px 0 0;}
 
 /* ---- quiet note. Replaces Streamlit's blue st.info, which fought the
    purple everywhere else on the page. ---- */
-.nyznote{border-left:3px solid #8B5CF6;background:#FAF8FF;border-radius:0 10px 10px 0;
-  padding:11px 14px;font-size:.86rem;color:#4A3D6B;line-height:1.6;margin:10px 0 2px;}
-.nyznote b{color:#3B0F8F;}
+.nyznote{border-left:3px solid var(--brand2);background:var(--s2);border-radius:0 10px 10px 0;
+  padding:12px 15px;font-size:.95rem;color:var(--ink2);line-height:1.6;margin:10px 0 2px;}
+.nyznote b{color:var(--brandink);}
 
 /* ---- result panel. The one place with elevation, so the eye lands here. ---- */
-.nyzres{border:1px solid #E4DEF7;border-radius:20px;padding:22px 22px 24px;
-  background:#FFFFFF;box-shadow:0 20px 50px -34px rgba(76,29,149,.55);}
-.nyzres .cap{font-size:.86rem;color:#6B5E8A;margin-bottom:2px;}
-.nyzfv{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:3.1rem;
-  line-height:1.02;letter-spacing:-.025em;color:#1B1033;font-variant-numeric:tabular-nums;}
-.nyzverdict{font-size:1.02rem;font-weight:700;margin-top:3px;}
-.g-gain{color:#0F7A52;} .g-warn{color:#9A5B06;} .g-loss{color:#B4233A;}
+.nyzres{border:1px solid var(--bd);border-radius:20px;padding:22px 22px 24px;
+  background:var(--s1);box-shadow:0 20px 50px -34px var(--shadow);}
+.nyzres .cap{font-size:.95rem;color:var(--ink3);margin-bottom:2px;}
+.nyzfv{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:3.35rem;
+  line-height:1.02;letter-spacing:-.025em;color:var(--ink);font-variant-numeric:tabular-nums;}
+.nyzverdict{font-size:1.1rem;font-weight:700;margin-top:3px;}
+.g-gain{color:var(--gain);} .g-warn{color:var(--brand2);} .g-loss{color:var(--loss);}
 
 /* ---- price-against-value scale. This is the real finding: not "₹306" on its
    own but where ₹306 sits relative to what the market charges today. ---- */
 .nyzscale{margin:20px 0 4px;}
-.nyztrack{position:relative;height:9px;border-radius:999px;background:#F1ECFD;}
-.nyzspan{position:absolute;top:0;height:9px;border-radius:999px;}
-.nyzpin{position:absolute;top:50%;width:3px;height:21px;border-radius:2px;
+.nyztrack{position:relative;height:10px;border-radius:999px;background:var(--s3);}
+.nyzspan{position:absolute;top:0;height:10px;border-radius:999px;}
+.nyzpin{position:absolute;top:50%;width:3px;height:22px;border-radius:2px;
   transform:translate(-50%,-50%);}
-.nyzaxis{display:flex;justify-content:space-between;font-size:.72rem;color:#7A6D99;
+.nyzaxis{display:flex;justify-content:space-between;font-size:.8rem;color:var(--ink3);
   margin-top:7px;font-variant-numeric:tabular-nums;}
 .nyzkey{display:flex;gap:18px;margin-top:11px;flex-wrap:wrap;}
-.nyzkey div{font-size:.82rem;color:#4A3D6B;display:flex;align-items:center;gap:7px;
+.nyzkey div{font-size:.9rem;color:var(--ink2);display:flex;align-items:center;gap:7px;
   font-variant-numeric:tabular-nums;}
 .nyzkey i{width:9px;height:9px;border-radius:3px;flex:0 0 auto;}
-.nyzkey b{color:#1B1033;}
+.nyzkey b{color:var(--ink);}
 
 /* ---- stat tiles ---- */
 .nyztiles{display:flex;gap:9px;margin-top:18px;}
 /* Column layout with the figure pushed to the bottom, so a label that wraps
    to two lines does not leave its number sitting lower than its neighbours'. */
-.nyztiles div{flex:1 1 0;min-width:0;background:#FAF8FF;border:1px solid #EDE8FB;
+.nyztiles div{flex:1 1 0;min-width:0;background:var(--s2);border:1px solid var(--bd);
   border-radius:12px;padding:11px 12px;display:flex;flex-direction:column;
   justify-content:space-between;}
-.nyztiles span{display:block;font-size:.76rem;color:#6B5E8A;margin-bottom:3px;}
-.nyztiles b{font-size:1.12rem;color:#1B1033;font-weight:700;
+.nyztiles span{display:block;font-size:.85rem;color:var(--ink3);margin-bottom:3px;}
+.nyztiles b{font-size:1.2rem;color:var(--ink);font-weight:700;
   font-variant-numeric:tabular-nums;}
 
 /* ---- the working, set as a ledger rather than a grey code blob ---- */
-.nyzwork{border:1px solid #EDE8FB;border-radius:12px;overflow:hidden;margin-top:8px;}
+.nyzwork{border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-top:8px;}
 .nyzwork div{display:flex;justify-content:space-between;gap:14px;align-items:baseline;
-  padding:10px 14px;font-size:.87rem;border-bottom:1px solid #F3EFFC;}
-.nyzwork div:last-child{border-bottom:none;background:#FAF8FF;}
-.nyzwork div:last-child s{font-weight:700;color:#1B1033;}
-.nyzwork div:last-child u{font-weight:700;color:#4C1D95;}
-.nyzwork s{text-decoration:none;color:#4A3D6B;}
-.nyzwork u{text-decoration:none;color:#1B1033;font-weight:600;white-space:nowrap;
+  padding:11px 15px;font-size:.95rem;border-bottom:1px solid var(--bd);}
+.nyzwork div:last-child{border-bottom:none;background:var(--s2);}
+.nyzwork div:last-child s{font-weight:700;color:var(--ink);}
+.nyzwork div:last-child u{font-weight:700;color:var(--brandink);}
+.nyzwork s{text-decoration:none;color:var(--ink2);}
+.nyzwork u{text-decoration:none;color:var(--ink);font-weight:600;white-space:nowrap;
   font-variant-numeric:tabular-nums;}
 
 /* ---- tables ---- */
-table.nyztbl{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:8px;}
-table.nyztbl th{text-align:left;font-weight:600;color:#6B5E8A;font-size:.78rem;
-  padding:8px 10px;border-bottom:1px solid #E4DEF7;}
-table.nyztbl td{padding:9px 10px;border-bottom:1px solid #F3EFFC;color:#1B1033;}
+table.nyztbl{width:100%;border-collapse:collapse;font-size:.94rem;margin-top:8px;}
+table.nyztbl th{text-align:left;font-weight:600;color:var(--ink3);font-size:.86rem;
+  padding:9px 10px;border-bottom:1px solid var(--bd);}
+table.nyztbl td{padding:10px 10px;border-bottom:1px solid var(--bd);color:var(--ink);}
 table.nyztbl tr:last-child td{border-bottom:none;}
 table.nyztbl .r{text-align:right;}
-table.nyztbl .muted{color:#7A6D99;}
+table.nyztbl .muted{color:var(--ink3);}
 /* The "how it works" column is reference, not the answer. Capping it keeps
    each row one or two lines instead of letting the formula set row height. */
-table.nyztbl td:nth-child(2){font-size:.79rem;line-height:1.45;}
+table.nyztbl td:nth-child(2){font-size:.87rem;line-height:1.45;}
 table.nyztbl th:first-child, table.nyztbl td:first-child{white-space:nowrap;}
 
 /* ---- section label inside the result ---- */
-.nyzlab{font-size:.92rem;font-weight:700;color:#1B1033;margin:22px 0 2px;}
+.nyzlab{font-size:1.02rem;font-weight:700;color:var(--ink);margin:22px 0 2px;}
 
 /* ---- empty state: an invitation, not a shrug ---- */
-.nyzempty{border:1px dashed #D9D0F0;border-radius:18px;padding:40px 24px;
-  text-align:center;background:#FDFCFF;}
-.nyzempty b{display:block;font-size:1rem;color:#1B1033;margin-bottom:5px;}
-.nyzempty span{font-size:.88rem;color:#6B5E8A;}
+.nyzempty{border:1px dashed var(--bd2);border-radius:18px;padding:40px 24px;
+  text-align:center;background:var(--s2);}
+.nyzempty b{display:block;font-size:1.08rem;color:var(--ink);margin-bottom:5px;}
+.nyzempty span{font-size:.96rem;color:var(--ink3);}
 
-.nyzdisc{font-size:.76rem;color:#7A6D99;line-height:1.65;margin-top:34px;
-  padding-top:16px;border-top:1px solid #EDE8FB;}
+.stApp .nyzdisc{font-size:.84rem;color:var(--ink3);line-height:1.65;margin-top:34px;
+  padding-top:16px;border-top:1px solid var(--bd);}
 
 @media (max-width:760px){
-  .nyzfv{font-size:2.5rem;}
+  .nyzfv{font-size:2.7rem;}
   .nyztiles{flex-wrap:wrap;}
   .nyztiles div{flex:1 1 30%;}
 }
@@ -237,8 +240,8 @@ def rs(x):
 
 
 # verdict class -> (text colour class, marker colour)
-TONE = {"strong": ("g-gain", "#0F7A52"), "buy": ("g-gain", "#0F7A52"),
-        "hold": ("g-warn", "#B45309"), "avoid": ("g-loss", "#B4233A")}
+TONE = {"strong": ("g-gain", "var(--gain)"), "buy": ("g-gain", "var(--gain)"),
+        "hold": ("g-warn", "var(--brand2)"), "avoid": ("g-loss", "var(--loss)")}
 
 
 def md_b(s):
@@ -257,16 +260,16 @@ def scale_html(price, fv, marker):
         return ""
     p_pct, f_pct = price / hi * 100, fv / hi * 100
     lo_pct, span = min(p_pct, f_pct), abs(f_pct - p_pct)
-    fill = "#A7F3D0" if fv >= price else "#FECDD3"
+    fill = "var(--gainfill)" if fv >= price else "var(--lossfill)"
     return (
         f'<div class="nyzscale"><div class="nyztrack">'
         f'<div class="nyzspan" style="left:{lo_pct:.2f}%;width:{span:.2f}%;'
         f'background:{fill}"></div>'
-        f'<div class="nyzpin" style="left:{p_pct:.2f}%;background:#1B1033"></div>'
+        f'<div class="nyzpin" style="left:{p_pct:.2f}%;background:var(--ink)"></div>'
         f'<div class="nyzpin" style="left:{f_pct:.2f}%;background:{marker}"></div>'
         f'</div><div class="nyzaxis"><span>₹0</span><span>{rs(hi)}</span></div>'
         f'<div class="nyzkey">'
-        f'<div><i style="background:#1B1033"></i>Market price <b>{rs(price)}</b></div>'
+        f'<div><i style="background:var(--ink)"></i>Market price <b>{rs(price)}</b></div>'
         f'<div><i style="background:{marker}"></i>Fair value <b>{rs(fv)}</b></div>'
         f'</div></div>'
     )
@@ -287,12 +290,20 @@ def table(headers, rows, right=()):
 # ---------------------------------------------------------------------------
 # UI
 # ---------------------------------------------------------------------------
-st.markdown(
-    f'<div class="nyzbar"><div class="mk">{LOGO_SVG}</div><div>'
-    f'<h1>Valuation Desk</h1>'
-    f'<p>Value a stock from figures you supply. Nothing is fetched, so the '
-    f'numbers are yours and so is the judgement behind the multiples.</p>'
-    f'</div></div>', unsafe_allow_html=True)
+_head, _ctrl = st.columns([5, 1], vertical_alignment="center")
+with _head:
+    st.markdown(
+        f'<div class="nyzbar"><div class="mk">{LOGO_SVG}</div><div>'
+        f'<h1>Valuation Desk</h1>'
+        f'<p>Value a stock from figures you supply. Nothing is fetched, so the '
+        f'numbers are yours and so is the judgement behind the multiples.</p>'
+        f'</div></div>', unsafe_allow_html=True)
+with _ctrl:
+    # Reads back into theme() on the next run. Streamlit commits widget state
+    # to session_state before it reruns, so the repaint is immediate, not a
+    # render behind.
+    st.toggle("Dark mode", key="nyz_dark")
+st.markdown('<div class="nyzrule"></div>', unsafe_allow_html=True)
 
 left, right = st.columns([1, 1], gap="large")
 
@@ -478,13 +489,13 @@ with right:
                     f'</div>', unsafe_allow_html=True)
                 if spread > 120:
                     st.markdown(
-                        '<div class="nyznote" style="border-left-color:#B4233A">'
+                        '<div class="nyznote" style="border-left-color:var(--loss)">'
                         '<b>The methods disagree sharply.</b> A single blended number '
                         'across a range this wide is false precision. Find the outlier '
                         'and why before leaning on it.</div>', unsafe_allow_html=True)
                 elif spread < 25:
                     st.markdown(
-                        '<div class="nyznote" style="border-left-color:#0F7A52">'
+                        '<div class="nyznote" style="border-left-color:var(--gain)">'
                         '<b>The methods agree closely</b>, which is a stronger signal '
                         'than any one of them alone.</div>', unsafe_allow_html=True)
 
