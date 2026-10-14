@@ -515,7 +515,12 @@ GATE_CSS = """
 /* Streamlit's chrome is noise on a sales screen. */
 #MainMenu, footer, header [data-testid="stStatusWidget"] {visibility:hidden;}
 [data-testid="stToolbar"], [data-testid="stDecoration"] {display:none !important;}
-[data-testid="stAppViewContainer"] > .main {background:#FFFFFF;}
+/* Pin the canvas white. The old selector ("> .main") no longer matches modern
+   Streamlit, so a visitor in dark mode got a near-black page under text that
+   was coloured for a light one. No single ink passes contrast on both white
+   and near-black, so the background is fixed rather than the text. */
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"],
+[data-testid="stHeader"], body {background:#FFFFFF !important;}
 
 /* Font is set on text elements only, never on bare spans. Streamlit draws its
    icons as ligature text inside spans, so a blanket span rule would replace
@@ -527,13 +532,17 @@ GATE_CSS = """
   max-width:640px !important; padding-top:2.2rem !important; padding-bottom:3rem !important;
 }
 
-/* ---- brand header ---- */
-.nyzhero{text-align:center;margin-bottom:26px;}
+/* ---- brand header ----
+   The hero carries its OWN background and text colours rather than inheriting
+   the page's. Without that, a visitor whose Streamlit is in dark mode sees
+   near-black title text on a near-black page. Do not make these transparent. */
+.nyzhero{text-align:center;margin-bottom:26px;background:#F6F3FE;
+  border:1px solid #E4DEF7;border-radius:20px;padding:26px 20px 24px;}
 .nyzmark{width:62px;height:62px;margin:0 auto 16px;border-radius:18px;
-  background:#F6F3FE;border:1.5px solid #6D28D9;display:flex;align-items:center;
+  background:#FFFFFF;border:1.5px solid #6D28D9;display:flex;align-items:center;
   justify-content:center;}
 .nyzname{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:1.85rem;
-  color:#1B1033;letter-spacing:-.02em;line-height:1.15;margin-bottom:6px;}
+  color:#3B0F8F;letter-spacing:-.02em;line-height:1.15;margin-bottom:6px;}
 .nyzsub{color:#4A3D6B;font-size:.98rem;max-width:42ch;margin:0 auto;}
 
 /* ---- price band ---- */
@@ -550,7 +559,9 @@ GATE_CSS = """
 .nyztrust div{flex:1 1 30%;background:#F6F3FE;border:1px solid #E4DEF7;
   border-radius:11px;padding:11px 8px;text-align:center;}
 .nyztrust b{display:block;font-size:1.02rem;color:#6D28D9;font-weight:700;line-height:1.3;}
-.nyztrust span{font-size:.7rem;color:#7A6D99;text-transform:uppercase;letter-spacing:.05em;}
+/* #6B5E8A not #7A6D99: the lighter tone measured 4.28:1 on the lavender
+   card, under the 4.5:1 minimum for small text. This measures 5.34:1. */
+.nyztrust span{font-size:.7rem;color:#6B5E8A;text-transform:uppercase;letter-spacing:.05em;}
 
 /* ---- buttons ---- */
 [data-testid="stLinkButton"] a, [data-testid="stBaseLinkButton-primary"],
@@ -558,13 +569,35 @@ GATE_CSS = """
   border-radius:11px !important; padding:13px 18px !important;
   font-weight:700 !important; font-size:.95rem !important; border-width:1px !important;
 }
-[data-testid="stBaseButton-primary"]{
+/* ^= prefix, not = exact. A form's submit button is "stBaseButton-primary
+   FormSubmit", a plain one is "stBaseButton-primary"; an exact selector
+   styles only the second and leaves the Unlock button Streamlit red. */
+[data-testid^="stBaseButton-primary"]{
   border-radius:11px !important; padding:13px 18px !important; font-weight:700 !important;
   font-size:.95rem !important; border:none !important;
   box-shadow:0 10px 26px -12px rgba(109,40,217,.7) !important;
 }
-[data-testid="stBaseButton-primary"]:hover{filter:brightness(1.07);}
-[data-testid="stBaseButton-secondary"]{border-radius:11px !important;font-weight:600 !important;}
+[data-testid^="stBaseButton-primary"]:hover{filter:brightness(1.07);}
+
+/* Colours are pinned here, not left to the theme. config.toml sets
+   primaryColor, but if that file is ever missing Streamlit falls back to its
+   default RED and the paid screen looks like a stranger's app. These rules
+   make the gate brand-correct on its own, in light or dark. */
+[data-testid^="stBaseButton-primary"],
+[data-testid^="stBaseLinkButton-primary"],
+[data-testid="stLinkButton"] a[kind="primary"]{
+  /* border-color too: Streamlit outlines link buttons in primaryColor, which
+     left a thin red ring around the purple Buy button. */
+  background:#6D28D9 !important; color:#FFFFFF !important;
+  border-color:#6D28D9 !important;
+}
+[data-testid^="stBaseButton-secondary"],
+[data-testid^="stBaseLinkButton-secondary"],
+[data-testid="stLinkButton"] a[kind="secondary"]{
+  border-radius:11px !important; font-weight:600 !important;
+  background:#FFFFFF !important; color:#4C1D95 !important;
+  border:1px solid #C6B9EC !important;
+}
 
 /* ---- divider + section head ---- */
 .nyzsep{display:flex;align-items:center;gap:13px;margin:30px 0 16px;
