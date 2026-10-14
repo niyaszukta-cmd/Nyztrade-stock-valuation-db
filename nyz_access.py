@@ -64,8 +64,8 @@ def config():
         "key_id": _sec("razorpay_key_id"),
         "key_secret": _sec("razorpay_key_secret"),
         "pay_url": _sec("pay_url"),
-        # Free valuations before payment. 0 turns the trial off entirely.
-        "trial_runs": int(_sec("trial_runs", 3) or 0),
+        # Free valuations per calendar month, per email. 0 turns the trial off.
+        "trial_runs": int(_sec("trial_runs", 5) or 0),
         "help_url": _sec("help_url", ""),
         "min_rupees": float(_sec("pro_min_amount_rupees", 0) or 0),
         "valid_days": int(_sec("pro_valid_days", 180) or 180),
@@ -420,14 +420,28 @@ def device_check(cfg, payment_ref, device, email):
 # number of rows IS the number of valuations used. Counting rows server-side
 # means the tally cannot be edited from the browser.
 #
+# The ref carries the month, so the allowance refills on the 1st without any
+# scheduled job: a new month simply looks under a key that has no rows yet.
+#
 # A throwaway email still gets a fresh trial. That is the residual hole, and
 # closing it needs emailed one-time codes, which is a bigger build.
 # ---------------------------------------------------------------------------
 TRIAL_PREFIX = "nyzvaltrial:"
 
 
-def trial_ref(email):
-    return TRIAL_PREFIX + (email or "").strip().lower()
+def trial_month(when=None):
+    """Current month in IST, so the reset lands at midnight on the 1st for
+    Indian users rather than part-way through their 1st."""
+    now = when or datetime.now(IST)
+    return f"{now.year:04d}-{now.month:02d}"
+
+
+def trial_ref(email, month=None):
+    """The month is part of the key, so a new month simply finds no rows and
+    the allowance starts again. Nothing has to run on a schedule to reset it,
+    and last month's rows stay as a record of who used what."""
+    return (TRIAL_PREFIX + (month or trial_month()) + ":"
+            + (email or "").strip().lower())
 
 
 def trial_used(cfg, email):
@@ -904,14 +918,15 @@ def _gate(cfg, device, auto_id):
                                    use_container_width=True)
 
     if cfg.get("trial_runs", 0) > 0:
-        with st.expander(f"Try it free — {cfg['trial_runs']} valuations"):
+        with st.expander(f"Try it free — {cfg['trial_runs']} valuations a month"):
             with st.form("nyz_trial"):
                 te = st.text_input("Your email", placeholder="you@example.com",
                                    key="nyz_trial_email")
                 tgo = st.form_submit_button("Start my free valuations",
                                             use_container_width=True)
             st.caption("No payment, no card. The count is kept against your email, "
-                       "so it follows you between browsers.")
+                       "so it follows you between browsers, and it refills on the "
+                       "1st of each month.")
     else:
         te, tgo = "", False
 
@@ -941,8 +956,9 @@ def _gate(cfg, device, auto_id):
             left = trial_left(cfg, addr)
             if left == 0:
                 st.error(
-                    f"This email has already used its {cfg['trial_runs']} free "
-                    "valuations. Buying below unlocks the tool without a limit.")
+                    f"This email has used all {cfg['trial_runs']} free valuations "
+                    "for this month. They refill on the 1st, or buying below "
+                    "removes the limit now.")
             else:
                 now = int(time.time())
                 _grant(cfg, {"ref": trial_ref(addr), "email": addr, "amount": 0,
@@ -993,7 +1009,7 @@ def sidebar(data, cfg=None):
         if data.get("trial"):
             left = trial_left(cfg, data.get("email"))
             st.caption("Free trial" if left is None
-                       else f"Free trial — {left} of {cfg['trial_runs']} left")
+                       else f"Free — {left} of {cfg['trial_runs']} left this month")
         if st.button("Sign out", use_container_width=True):
             if not data.get("comp") and not data.get("trial"):
                 device_forget(cfg, data.get("ref"),
