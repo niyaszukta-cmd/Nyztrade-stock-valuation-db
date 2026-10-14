@@ -1,0 +1,607 @@
+<!-- ===================================================================
+     NYZTrade Valuation Pro - product landing page
+     Paste into a WordPress "Custom HTML" block, e.g. at
+     nyztrade.in/valuation-pro/
+
+     Everything is scoped under .vp so your theme cannot clash with it.
+     No ampersand characters appear inside script blocks, per the WordPress rule.
+     SEO fields for Rank Math are in the comment at the end of this file.
+     =================================================================== -->
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "NYZTrade Valuation Pro",
+  "description": "A stock valuation tool for Indian equities. Value any NSE or BSE company five ways from figures you supply, against benchmark multiples for 28 industries.",
+  "brand": {"@type": "Brand", "name": "NYZTrade"},
+  "category": "Financial software",
+  "offers": {
+    "@type": "Offer",
+    "price": "299",
+    "priceCurrency": "INR",
+    "availability": "https://schema.org/InStock",
+    "url": "https://nyztrade.in/valuation-pro/"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is this a subscription?",
+      "acceptedAnswer": {"@type": "Answer", "text": "No. One payment of Rs 299 gives 180 days of access. Nothing renews automatically and there is no card stored."}
+    },
+    {
+      "@type": "Question",
+      "name": "How many devices can I use?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Two, for example a laptop and a phone. You stay signed in on both. If you change device, sign out on the old one to free the slot, or contact support to reset it."}
+    },
+    {
+      "@type": "Question",
+      "name": "Where do the numbers come from?",
+      "acceptedAnswer": {"@type": "Answer", "text": "You supply them, from the annual report, the quarterly results, a data site or your broker terminal. The tool does not fetch market data, so you always know exactly which figures produced the answer."}
+    },
+    {
+      "@type": "Question",
+      "name": "Which valuation methods does it use?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Five: P/E on your own target multiple, P/E on the industry multiple, Price to Book, EV to EBITDA, and the Graham Number. You can run one on its own or all five blended into a weighted fair value."}
+    },
+    {
+      "@type": "Question",
+      "name": "Is this investment advice?",
+      "acceptedAnswer": {"@type": "Answer", "text": "No. The tool performs arithmetic on figures you type in. It does not verify them and knows nothing about the company. NYZTrade is not a SEBI-registered investment adviser and nothing here is a recommendation or a price target."}
+    },
+    {
+      "@type": "Question",
+      "name": "What if I want a refund?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Write to us within 7 days of purchase and we will look at it. Because access is granted immediately on payment, refunds are at our discretion. Full terms are on the refund policy page."}
+    }
+  ]
+}
+</script>
+
+<div class="vp">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@500;700&display=swap');
+
+.vp{
+  /* White and purple. Light is the default; dark is a purple-tinted toggle. */
+  --bg:#FFFFFF; --s1:#FFFFFF; --s2:#FAF8FF; --s3:#F4F1FE;
+  --bd:#E4DEF7; --bd2:#C6B9EC;
+  --ink:#1B1033; --ink2:#4A3D6B; --ink3:#7A6D99;
+  --brand:#6D28D9; --brand-2:#8B5CF6; --on-brand:#FFFFFF;
+  --green:#0E7A52; --red:#C32F43; --blue:#4338CA;
+  --brand-s:rgba(109,40,217,.08); --green-s:rgba(14,122,82,.10);
+  --blue-s:rgba(67,56,202,.07); --red-s:rgba(195,47,67,.09);
+  --r:16px; --rc:11px;
+  --sh:0 14px 38px -18px rgba(76,29,149,.28);
+}
+.vp[data-theme="dark"]{
+  --bg:#120C21; --s1:#1B1330; --s2:#221838; --s3:#2B2047;
+  --bd:#342A52; --bd2:#4A3D6E;
+  --ink:#EDE9FB; --ink2:#B4A8D4; --ink3:#8578A6;
+  --brand:#A78BFA; --brand-2:#C4B5FD; --on-brand:#1B1033;
+  --green:#34D399; --red:#FB7185; --blue:#818CF8;
+  --brand-s:rgba(167,139,250,.14); --green-s:rgba(52,211,153,.13);
+  --blue-s:rgba(129,140,248,.13); --red-s:rgba(251,113,133,.12);
+  --sh:0 18px 50px -14px rgba(0,0,0,.6);
+}
+.vp *{box-sizing:border-box;margin:0;padding:0;}
+.vp{
+  font-family:'DM Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.6;
+  -webkit-font-smoothing:antialiased;padding-bottom:40px;
+}
+.vp h1,.vp h2,.vp h3{font-family:'Fraunces',Georgia,serif;font-weight:700;
+  letter-spacing:-.018em;line-height:1.15;}
+.vp .mono{font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-variant-numeric:tabular-nums;}
+.vp .w{max-width:1120px;margin:0 auto;padding:0 18px;}
+
+/* ---- top bar ---- */
+.vp .bar{display:flex;align-items:center;gap:12px;padding:18px 0;flex-wrap:wrap;}
+.vp .brand{display:flex;align-items:center;gap:11px;margin-right:auto;}
+.vp .bm{width:40px;height:40px;border-radius:12px;background:var(--s2);
+  border:1.5px solid var(--brand);display:flex;align-items:center;justify-content:center;flex:none;}
+.vp .bm svg{width:22px;height:22px;}
+.vp .bn{font-family:'Fraunces',serif;font-weight:700;font-size:1.14rem;}
+.vp .bs{font-size:.69rem;color:var(--ink3);letter-spacing:.11em;text-transform:uppercase;}
+.vp .tg{background:var(--s2);border:1px solid var(--bd);color:var(--ink2);
+  border-radius:var(--rc);padding:8px 14px;font:inherit;font-size:.82rem;cursor:pointer;
+  transition:all .18s;}
+.vp .tg:hover{border-color:var(--brand);color:var(--ink);}
+
+/* ---- hero ---- */
+.vp .hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+  gap:34px;align-items:center;padding:30px 0 20px;}
+@media (max-width:860px){.vp .hero{grid-template-columns:minmax(0,1fr);gap:26px;}}
+.vp .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.73rem;
+  letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--brand);
+  background:var(--brand-s);border:1px solid var(--brand);border-radius:99px;
+  padding:5px 13px;margin-bottom:17px;}
+.vp h1{font-size:clamp(2rem,5vw,3.1rem);margin-bottom:15px;}
+.vp .lede{color:var(--ink2);font-size:1.05rem;max-width:54ch;margin-bottom:24px;}
+.vp .cta{display:flex;gap:11px;flex-wrap:wrap;margin-bottom:16px;}
+.vp .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border:none;border-radius:var(--rc);padding:14px 26px;font:inherit;font-weight:700;
+  font-size:.96rem;cursor:pointer;text-decoration:none;transition:filter .18s,transform .08s;}
+.vp .btn:hover{filter:brightness(1.08);}
+.vp .btn:active{transform:translateY(1px);}
+.vp .b-brand{background:var(--brand);color:var(--on-brand);}
+.vp .b-ghost{background:transparent;color:var(--ink);border:1px solid var(--bd2);}
+.vp .micro{font-size:.82rem;color:var(--ink3);}
+
+/* ---- price card ---- */
+.vp .pcard{background:var(--s1);border:1px solid var(--bd);border-radius:20px;
+  padding:26px;box-shadow:var(--sh);}
+.vp .pcard .tag{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink3);font-weight:700;}
+.vp .amt{display:flex;align-items:baseline;gap:9px;margin:9px 0 3px;}
+.vp .amt b{font-family:'Fraunces',serif;font-size:3rem;line-height:1;}
+.vp .amt span{color:var(--ink3);font-size:.92rem;}
+.vp .plist{list-style:none;margin:19px 0 21px;display:flex;flex-direction:column;gap:11px;}
+.vp .plist li{display:flex;gap:11px;align-items:flex-start;font-size:.92rem;color:var(--ink2);}
+.vp .tick{width:19px;height:19px;border-radius:50%;background:var(--green-s);
+  color:var(--green);flex:none;display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:700;margin-top:2px;}
+.vp .pnote{font-size:.78rem;color:var(--ink3);text-align:center;margin-top:11px;}
+
+/* ---- trust strip ---- */
+.vp .strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:11px;margin:34px 0;}
+.vp .st{background:var(--s1);border:1px solid var(--bd);border-radius:var(--rc);
+  padding:15px 16px;}
+.vp .st b{display:block;font-family:'JetBrains Mono',monospace;font-size:1.15rem;
+  color:var(--brand);line-height:1.2;}
+.vp .st span{font-size:.75rem;color:var(--ink3);text-transform:uppercase;
+  letter-spacing:.05em;}
+
+/* ---- sections ---- */
+.vp section{margin:52px 0;}
+.vp .shead{margin-bottom:22px;max-width:62ch;}
+.vp .shead h2{font-size:1.65rem;margin-bottom:8px;}
+.vp .shead p{color:var(--ink2);font-size:.97rem;}
+
+.vp .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:14px;}
+.vp .card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);
+  padding:21px;}
+.vp .card h3{font-size:1.04rem;margin-bottom:8px;display:flex;align-items:center;gap:9px;}
+.vp .card p{font-size:.9rem;color:var(--ink2);}
+.vp .num{width:25px;height:25px;border-radius:8px;background:var(--brand);color:var(--on-brand);
+  font-size:.77rem;font-weight:700;display:flex;align-items:center;justify-content:center;
+  flex:none;font-family:'DM Sans',sans-serif;}
+.vp .formula{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--ink3);
+  background:var(--s3);border-radius:8px;padding:7px 10px;margin-top:11px;
+  display:inline-block;word-break:break-word;}
+.vp .caution{font-size:.84rem;color:var(--ink2);margin-top:10px;
+  border-left:2px solid var(--bd2);padding-left:11px;}
+
+/* ---- demo ---- */
+.vp .demo{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);
+  overflow:hidden;box-shadow:var(--sh);}
+.vp .dhead{background:var(--s3);border-bottom:1px solid var(--bd);padding:13px 17px;
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap;}
+.vp .dhead b{font-size:.92rem;}
+.vp .dhead .muted{font-size:.82rem;color:var(--ink3);margin-left:auto;}
+.vp .verdict{padding:21px;text-align:center;color:#fff;
+  background:linear-gradient(135deg,#9A3412,#D97706);}
+.vp .vk{font-size:.71rem;letter-spacing:.1em;text-transform:uppercase;opacity:.9;}
+.vp .vv{font-family:'Fraunces',serif;font-size:2.3rem;line-height:1.1;margin:6px 0 3px;}
+.vp .vs{font-size:.87rem;opacity:.93;}
+.vp .dtable{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.vp table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:420px;}
+.vp th{background:transparent;color:var(--ink3);text-align:left;font-weight:500;
+  padding:10px 15px;font-size:.69rem;text-transform:uppercase;letter-spacing:.05em;
+  border-bottom:1px solid var(--bd);white-space:nowrap;}
+.vp td{padding:10px 15px;border-bottom:1px solid var(--bd);white-space:nowrap;}
+.vp tbody tr:last-child td{border-bottom:none;}
+.vp .up{color:var(--green);font-weight:700;}
+.vp .dn{color:var(--red);font-weight:700;}
+.vp .mut{color:var(--ink3);}
+.vp .dfoot{padding:14px 17px;border-top:1px solid var(--bd);font-size:.84rem;
+  color:var(--ink2);background:var(--blue-s);}
+.vp .dfoot b{color:var(--blue);}
+
+/* ---- compare ---- */
+.vp .cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media (max-width:640px){.vp .cmp{grid-template-columns:1fr;}}
+.vp .cmp .card.pro{border:1.5px solid var(--brand);}
+.vp .pill{font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:99px;
+  background:var(--brand-s);color:var(--brand);border:1px solid var(--brand);}
+.vp .pill.free{background:var(--green-s);color:var(--green);border-color:var(--green);}
+.vp .clist{list-style:none;margin-top:14px;display:flex;flex-direction:column;gap:9px;}
+.vp .clist li{font-size:.88rem;color:var(--ink2);display:flex;gap:9px;}
+.vp .x{color:var(--ink3);flex:none;}
+
+/* ---- faq ---- */
+.vp details{background:var(--s1);border:1px solid var(--bd);border-radius:var(--rc);
+  padding:14px 17px;margin-bottom:9px;}
+.vp details[open]{border-color:var(--bd2);}
+.vp summary{cursor:pointer;font-weight:700;font-size:.94rem;list-style:none;
+  display:flex;justify-content:space-between;gap:13px;align-items:center;}
+.vp summary::-webkit-details-marker{display:none;}
+.vp summary::after{content:"+";color:var(--brand);font-size:1.3rem;line-height:1;flex:none;}
+.vp details[open] summary::after{content:"\2212";}
+.vp details p{margin-top:11px;font-size:.9rem;color:var(--ink2);}
+
+/* ---- final cta ---- */
+.vp .final{background:linear-gradient(140deg,var(--s2),var(--s1));
+  border:1px solid var(--brand);border-radius:20px;padding:34px 28px;text-align:center;}
+.vp .final h2{font-size:1.55rem;margin-bottom:10px;}
+.vp .final p{color:var(--ink2);max-width:52ch;margin:0 auto 20px;}
+
+/* ---- footer ---- */
+.vp .foot{margin-top:46px;padding-top:22px;border-top:1px solid var(--bd);
+  font-size:.79rem;color:var(--ink3);line-height:1.7;}
+.vp .foot a{color:var(--ink2);text-decoration:underline;}
+.vp .links{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;}
+
+@media (max-width:640px){
+  .vp .cta .btn{width:100%;}
+  .vp .strip{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+
+<div class="w">
+
+  <div class="bar">
+    <div class="brand">
+      <div class="bm">
+        <svg viewBox="0 0 48 48" fill="none">
+          <path d="M13 34V14l12 13.5V14" stroke="#6D28D9" stroke-width="3.8"
+                stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="30" y="20" width="4" height="14" rx="1.6" fill="#8B5CF6"/>
+          <rect x="36.5" y="25" width="4" height="9" rx="1.6" fill="#C4B5FD"/>
+        </svg>
+      </div>
+      <div>
+        <div class="bn">NYZTrade</div>
+        <div class="bs">Valuation Pro</div>
+      </div>
+    </div>
+    <button class="tg" id="vpTheme" type="button">Light</button>
+  </div>
+
+  <!-- ================= HERO ================= -->
+  <div class="hero">
+    <div>
+      <span class="eyebrow">One payment &middot; no subscription</span>
+      <h1>Work out what a stock is actually worth</h1>
+      <p class="lede">
+        Five valuation methods on one screen, against benchmark multiples for 28 Indian
+        industries. You bring the figures; the tool shows the arithmetic, every method
+        side by side, and how far apart they are.
+      </p>
+      <div class="cta">
+        <a class="btn b-brand" id="vpBuy1" href="#" target="_blank" rel="noopener">
+          Buy for &#8377;299
+        </a>
+        <a class="btn b-ghost" id="vpTry" href="#" target="_blank" rel="noopener">
+          Try the free version
+        </a>
+      </div>
+      <p class="micro">180 days access &middot; works on 2 devices &middot; instant unlock after payment</p>
+    </div>
+
+    <div class="pcard">
+      <div class="tag">NYZTrade Valuation Pro</div>
+      <div class="amt"><b>&#8377;299</b><span>one time</span></div>
+      <div class="micro">for 180 days of access</div>
+      <ul class="plist">
+        <li><span class="tick">&#10003;</span><span>All five valuation methods, single or blended</span></li>
+        <li><span class="tick">&#10003;</span><span>Benchmark multiples for 28 industries, cap-size adjusted</span></li>
+        <li><span class="tick">&#10003;</span><span>Step-by-step working for every calculation</span></li>
+        <li><span class="tick">&#10003;</span><span>Bear / base / bull sensitivity on the multiple</span></li>
+        <li><span class="tick">&#10003;</span><span>Signed in on 2 devices &mdash; laptop and phone</span></li>
+        <li><span class="tick">&#10003;</span><span>No card stored, nothing auto-renews</span></li>
+      </ul>
+      <a class="btn b-brand" id="vpBuy2" href="#" target="_blank" rel="noopener"
+         style="width:100%">Buy now &#8594;</a>
+      <p class="pnote">Secure payment by Razorpay &middot; UPI, cards, net banking</p>
+    </div>
+  </div>
+
+  <div class="strip">
+    <div class="st"><b>5</b><span>Methods</span></div>
+    <div class="st"><b>28</b><span>Industry benchmarks</span></div>
+    <div class="st"><b>180</b><span>Days access</span></div>
+    <div class="st"><b>2</b><span>Devices</span></div>
+  </div>
+
+  <!-- ================= METHODS ================= -->
+  <section>
+    <div class="shead">
+      <h2>Five ways to value the same company</h2>
+      <p>No single method suits every business. Run one on its own, or all five
+         blended into a weighted fair value &mdash; and see where they disagree.</p>
+    </div>
+    <div class="grid3">
+      <div class="card">
+        <h3><span class="num">1</span>Your P/E</h3>
+        <p>What the earnings are worth, on a multiple you choose.</p>
+        <div class="formula">EPS &times; target P/E</div>
+        <p class="caution">Breaks down on negative or cyclical earnings.</p>
+      </div>
+      <div class="card">
+        <h3><span class="num">2</span>Industry P/E</h3>
+        <p>The same arithmetic, on the multiple the peer group trades at.</p>
+        <div class="formula">EPS &times; peer P/E</div>
+        <p class="caution">Inherits the mood of the sector, good or bad.</p>
+      </div>
+      <div class="card">
+        <h3><span class="num">3</span>Price / Book</h3>
+        <p>Net assets per share, repriced at a multiple.</p>
+        <div class="formula">BVPS &times; target P/B</div>
+        <p class="caution">Built for banks and NBFCs. Weak for asset-light firms.</p>
+      </div>
+      <div class="card">
+        <h3><span class="num">4</span>EV / EBITDA</h3>
+        <p>Values the whole business, then nets off debt to leave equity.</p>
+        <div class="formula">(EBITDA &times; mult &minus; net debt) &divide; shares</div>
+        <p class="caution">Ignores capex, so it flatters heavy spenders.</p>
+      </div>
+      <div class="card">
+        <h3><span class="num">5</span>Graham Number</h3>
+        <p>A deliberately strict floor from earnings and book together.</p>
+        <div class="formula">&#8730;(22.5 &times; EPS &times; BVPS)</div>
+        <p class="caution">Will call almost any growth company expensive.</p>
+      </div>
+      <div class="card" style="border-color:var(--brand)">
+        <h3><span class="num">&#9733;</span>All five, blended</h3>
+        <p>A weighted fair value across every method that has the inputs it needs,
+           with the spread between them shown rather than hidden.</p>
+        <div class="formula">30 / 25 / 20 / 17 / 8 weighting</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DEMO ================= -->
+  <section>
+    <div class="shead">
+      <h2>What the output looks like</h2>
+      <p>A large-cap auto manufacturer at &#8377;640, with EPS of &#8377;42, a forward
+         estimate of &#8377;47 and book value of &#8377;310 per share.</p>
+    </div>
+    <div class="demo">
+      <div class="dhead">
+        <b>Example Auto Ltd</b>
+        <span class="mut" style="font-size:.84rem">Auto Manufacturers &middot; Large cap</span>
+        <span class="muted">illustrative</span>
+      </div>
+      <div class="verdict">
+        <div class="vk">Fair value &middot; after 15% margin of safety</div>
+        <div class="vv mono">&#8377;620.48</div>
+        <div class="vs">Slightly expensive &middot; &minus;3.0% vs market price of &#8377;640.00</div>
+      </div>
+      <div class="dtable">
+        <table>
+          <thead><tr><th>Method</th><th>Basis</th><th>Value</th><th>Gap</th></tr></thead>
+          <tbody>
+            <tr><td>Forward P/E</td><td class="mut mono">&#8377;47 &times; 17.1x</td>
+                <td class="mono">&#8377;803.70</td><td class="up mono">+25.6%</td></tr>
+            <tr><td>Your P/E</td><td class="mut mono">&#8377;42 &times; 18.0x</td>
+                <td class="mono">&#8377;756.00</td><td class="up mono">+18.1%</td></tr>
+            <tr><td>Price / Book</td><td class="mut mono">&#8377;310 &times; 2.2x</td>
+                <td class="mono">&#8377;682.00</td><td class="up mono">+6.6%</td></tr>
+            <tr><td>Graham Number</td><td class="mut mono">&#8730;(22.5&times;42&times;310)</td>
+                <td class="mono">&#8377;541.25</td><td class="dn mono">&minus;15.4%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="dfoot">
+        <b>Note what this concludes.</b> Three methods say the stock is cheap and the
+        fourth says it is not, so after a margin of safety it comes out slightly
+        <em>above</em> fair value. That disagreement is the useful output. A tool that
+        only ever says &ldquo;undervalued&rdquo; is not telling you anything.
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HOW ================= -->
+  <section>
+    <div class="shead">
+      <h2>How it works</h2>
+    </div>
+    <div class="grid3">
+      <div class="card">
+        <h3><span class="num">1</span>Pay</h3>
+        <p>&#8377;299 through Razorpay &mdash; UPI, card or net banking. Use the email
+           address you want your access tied to.</p>
+      </div>
+      <div class="card">
+        <h3><span class="num">2</span>Unlock</h3>
+        <p>You are sent straight back to the tool and it unlocks itself. No account to
+           create, no password to remember.</p>
+      </div>
+      <div class="card">
+        <h3><span class="num">3</span>Use it</h3>
+        <p>You stay signed in for 180 days on up to two devices. Close the tab, come
+           back tomorrow, it is still open.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FREE VS PRO ================= -->
+  <section>
+    <div class="shead">
+      <h2>Free version vs Pro</h2>
+      <p>There is a free calculator. It is genuinely useful, and it stays free.</p>
+    </div>
+    <div class="cmp">
+      <div class="card">
+        <h3>Free calculator <span class="pill free">&#8377;0</span></h3>
+        <ul class="clist">
+          <li><span class="tick">&#10003;</span><span>All five methods</span></li>
+          <li><span class="tick">&#10003;</span><span>28 industry benchmarks</span></li>
+          <li><span class="tick">&#10003;</span><span>Runs in your browser</span></li>
+          <li><span class="x">&minus;</span><span>Figures re-entered every visit</span></li>
+          <li><span class="x">&minus;</span><span>No saved session</span></li>
+        </ul>
+      </div>
+      <div class="card pro">
+        <h3>Valuation Pro <span class="pill">&#8377;299</span></h3>
+        <ul class="clist">
+          <li><span class="tick">&#10003;</span><span>Everything in the free version</span></li>
+          <li><span class="tick">&#10003;</span><span>Stays signed in for 180 days</span></li>
+          <li><span class="tick">&#10003;</span><span>Two devices, laptop and phone</span></li>
+          <li><span class="tick">&#10003;</span><span>Hosted and maintained &mdash; nothing to install</span></li>
+          <li><span class="tick">&#10003;</span><span>Priority help on WhatsApp</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section>
+    <div class="shead"><h2>Questions</h2></div>
+    <details><summary>Is this a subscription?</summary>
+      <p>No. One payment of &#8377;299 gives 180 days of access. Nothing renews
+         automatically and no card is stored.</p></details>
+    <details><summary>How many devices can I use?</summary>
+      <p>Two &mdash; for example a laptop and a phone. You stay signed in on both. If you
+         change device, sign out on the old one to free the slot, or message us and we
+         will reset it.</p></details>
+    <details><summary>Where do the numbers come from?</summary>
+      <p>You supply them, from the annual report, the quarterly results, a data site, or
+         your broker terminal. The tool does not fetch market data, so you always know
+         exactly which figures produced the answer.</p></details>
+    <details><summary>Which valuation methods does it use?</summary>
+      <p>Five: P/E on your own target multiple, P/E on the industry multiple, Price to
+         Book, EV to EBITDA, and the Graham Number. Run one on its own, or all five
+         blended into a weighted fair value.</p></details>
+    <details><summary>Is this investment advice?</summary>
+      <p>No. The tool performs arithmetic on figures you type in. It does not verify
+         them and knows nothing about the company. NYZTrade is not a SEBI-registered
+         investment adviser, and nothing here is a recommendation or a price target.</p></details>
+    <details><summary>What if I want a refund?</summary>
+      <p>Write to us within 7 days of purchase and we will look at it. Because access is
+         granted immediately on payment, refunds are at our discretion. Full terms are on
+         the refund policy page.</p></details>
+    <details><summary>The tool took a while to open. Is something wrong?</summary>
+      <p>No. If nobody has used it for several hours the server goes to sleep and takes
+         about half a minute to wake up. After that it is instant.</p></details>
+  </section>
+
+  <!-- ================= FINAL CTA ================= -->
+  <section>
+    <div class="final">
+      <h2>Value your next idea properly</h2>
+      <p>One payment, 180 days, five methods, and the working shown at every step.</p>
+      <div class="cta" style="justify-content:center;margin-bottom:0">
+        <a class="btn b-brand" id="vpBuy3" href="#" target="_blank" rel="noopener">
+          Buy for &#8377;299
+        </a>
+        <a class="btn b-ghost" id="vpHelp" href="#" target="_blank" rel="noopener">
+          Ask a question
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <div class="links">
+      <a href="/about/">About</a>
+      <a href="/contact/">Contact</a>
+      <a href="/terms/">Terms</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/refund-policy/">Refund Policy</a>
+    </div>
+    <strong>Educational tool.</strong> NYZTrade Valuation Pro performs arithmetic on
+    figures you supply. It does not verify them, fetch market data, or know anything
+    about the company. Its output is not investment advice, not a recommendation, and
+    not a price target. NYZTrade is not a SEBI-registered investment adviser or research
+    analyst. A valuation is only as sound as its inputs and the judgement behind the
+    multiples. Verify every figure against the company&rsquo;s filings and consult a
+    SEBI-registered adviser before acting.
+    <br><br>
+    &copy; NYZTrade Financial Solutions, Kozhikode, Kerala.
+  </div>
+</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =================================================================
+     SETTINGS - edit these four lines and nothing else
+     ================================================================= */
+  var BUY_URL  = "";   /* Razorpay Payment Page, e.g. https://pages.razorpay.com/nyztrade-valuation */
+  var APP_URL  = "";   /* Streamlit app, e.g. https://nyztrade-valuation.streamlit.app */
+  var FREE_URL = "/valuation/";                 /* the free calculator page */
+  var HELP_URL = "https://wa.me/917598597668";  /* WhatsApp for questions */
+  /* ================================================================= */
+
+  var root = document.querySelector(".vp");
+  if (!root) { return; }
+
+  /* ---- theme ---- */
+  var KEY = "nyz_theme";
+  function rd() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+  function wr(v) { try { localStorage.setItem(KEY, v); } catch (e) { /* private mode */ } }
+  var th = rd();
+  if (th !== "dark") { if (th !== "light") { th = "light"; } }
+  root.setAttribute("data-theme", th);
+
+  var tg = document.getElementById("vpTheme");
+  function paint() {
+    tg.textContent = (root.getAttribute("data-theme") === "dark") ? "Light" : "Dark";
+  }
+  paint();
+  tg.addEventListener("click", function () {
+    var n = (root.getAttribute("data-theme") === "light") ? "dark" : "light";
+    root.setAttribute("data-theme", n);
+    wr(n);
+    paint();
+  });
+
+  /* ---- links ----
+     A Buy button that goes nowhere is worse than no button, so any button
+     without a URL hides itself rather than sitting there dead. */
+  function wire(id, url, hideIfEmpty) {
+    var el = document.getElementById(id);
+    if (!el) { return; }
+    if (!url) {
+      if (hideIfEmpty) { el.style.display = "none"; }
+      return;
+    }
+    el.setAttribute("href", url);
+  }
+  wire("vpBuy1", BUY_URL, true);
+  wire("vpBuy2", BUY_URL, true);
+  wire("vpBuy3", BUY_URL, true);
+  wire("vpTry", FREE_URL, true);
+  wire("vpHelp", HELP_URL, true);
+
+  /* If the app URL is set, returning buyers get a direct way back in. */
+  if (APP_URL) {
+    var bar = document.querySelector(".vp .bar");
+    var a = document.createElement("a");
+    a.className = "tg";
+    a.href = APP_URL;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = "Open the tool";
+    a.id = "vpOpen";
+    bar.insertBefore(a, tg);
+  }
+})();
+</script>
+
+<!-- =====================================================================
+     RANK MATH SETTINGS for this page (paste into the Rank Math panel):
+
+     Focus keyphrase : stock valuation tool india
+     SEO title       : NYZTrade Valuation Pro | Stock Valuation Tool for Indian Equities
+     Meta description: Value any NSE or BSE stock five ways - P/E, P/B, EV/EBITDA and
+                       the Graham Number - against benchmarks for 28 industries. Rs 299
+                       for 180 days, two devices, no subscription.
+     Secondary keywords:
+       fair value calculator india, intrinsic value nse stocks, ev ebitda calculator india,
+       graham number calculator, stock valuation software india, price to book calculator
+     ===================================================================== -->
