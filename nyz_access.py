@@ -513,52 +513,92 @@ def _grant(cfg, info):
 # worksheet each add their own layer on top. Keeping the tokens in one place
 # is why the paid screen and the calculator look like the same product.
 # ---------------------------------------------------------------------------
-BASE_CSS = """
+# Every colour in both screens comes from these tokens. The dark set simply
+# redefines them, which is why one toggle can repaint the whole app including
+# Streamlit's own widgets.
+LIGHT_VARS = """
+  --bg:#FFFFFF; --s1:#FFFFFF; --s2:#FAF8FF; --s3:#F6F3FE;
+  --bd:#E4DEF7; --bd2:#D9D0F0;
+  --ink:#1B1033; --ink2:#4A3D6B; --ink3:#6B5E8A;
+  --brand:#6D28D9; --brand2:#8B5CF6; --onbrand:#FFFFFF; --brandink:#4C1D95;
+  --gain:#0F7A52; --loss:#B4233A;
+  --gainfill:#A7F3D0; --lossfill:#FECDD3;
+  --shadow:rgba(76,29,149,.42); --glow:rgba(109,40,217,.55); --logo:#6D28D9;
+"""
+
+DARK_VARS = """
+  --bg:#130D22; --s1:#1B1333; --s2:#211841; --s3:#281D4C;
+  --bd:#3A2E63; --bd2:#4C3F80;
+  --ink:#F4F1FD; --ink2:#D2C8EC; --ink3:#AEA1D4;
+  --brand:#7C3AED; --brand2:#A78BFA; --onbrand:#FFFFFF; --brandink:#C4B5FD;
+  --gain:#34D399; --loss:#FB7185;
+  --gainfill:#14532D; --lossfill:#4C1D24;
+  --shadow:rgba(0,0,0,.65); --glow:rgba(124,58,237,.55); --logo:#C4B5FD;
+"""
+
+
+def _base_css(dark):
+    """Shared look. Tokens live on :root so BaseWeb's portalled dropdown
+    menus — which render outside .stApp — can read them too."""
+    return """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');
+
+:root{""" + (DARK_VARS if dark else LIGHT_VARS) + """}
+
+/* Bumped from the browser default of 16px. Every size in this app is in rem,
+   so this one line scales the whole interface rather than a list of tweaks. */
+html{font-size:17.5px;}
 
 /* Streamlit's chrome is noise on a product screen. */
 #MainMenu, footer, header [data-testid="stStatusWidget"] {visibility:hidden;}
 [data-testid="stToolbar"], [data-testid="stDecoration"] {display:none !important;}
 
-/* Pin the canvas white. The old selector ("> .main") no longer matches modern
-   Streamlit, so a visitor in dark mode got a near-black page under text that
-   was coloured for a light one. No single ink passes contrast on both white
-   and near-black, so the background is fixed rather than the text. */
+/* The canvas is pinned to our own token, never left to Streamlit's theme:
+   without this a visitor in dark mode got a near-black page under text
+   coloured for a light one. */
 .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"],
-[data-testid="stHeader"], body {background:#FFFFFF !important;}
+[data-testid="stHeader"], body {background:var(--bg) !important;}
+[data-testid="stSidebarContent"]{background:var(--s1) !important;}
 
 /* Font is set on text elements only, never on bare spans. Streamlit draws its
    icons as ligature text inside spans, so a blanket span rule would replace
    the arrow glyph with the literal word "keyboard_arrow_right". */
-.stApp, .stApp p, .stApp label {
+.stApp, .stApp p, .stApp label, .stApp li {
   font-family:'DM Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  color:#1B1033;
+  color:var(--ink);
 }
+.stApp p, .stApp li{font-size:1rem;}
+/* Headings and captions follow Streamlit's own theme colour, which is fixed
+   by config.toml and so stayed dark-on-dark in the sidebar. Links too: an
+   email in a caption is auto-linkified and came out in default link blue. */
+.stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6{
+  color:var(--ink) !important;
+}
+.stApp [data-testid="stCaptionContainer"],
+.stApp [data-testid="stCaptionContainer"] *{color:var(--ink3) !important;}
+.stApp a:not([data-testid*="LinkButton"]):not([kind]){color:var(--brandink) !important;}
 
 /* Figures line up column-wise only with tabular figures. On a valuation
-   sheet every number is meant to be compared against the one above it. */
+   sheet every number is meant to be compared with the one above it. */
 .nyznum, .nyzfig, table.nyztbl td, table.nyztbl th {font-variant-numeric:tabular-nums;}
 
 /* ---- buttons ---- */
 [data-testid="stLinkButton"] a, [data-testid="stBaseLinkButton-primary"],
 [data-testid="stBaseLinkButton-secondary"]{
   border-radius:11px !important; padding:13px 18px !important;
-  font-weight:700 !important; font-size:.95rem !important; border-width:1px !important;
+  font-weight:700 !important; font-size:1rem !important; border-width:1px !important;
 }
 /* ^= prefix, not = exact. A form's submit button is "stBaseButton-primary
    FormSubmit", a plain one is "stBaseButton-primary"; an exact selector
    styles only the second and leaves the Unlock button Streamlit red. */
 [data-testid^="stBaseButton-primary"]{
   border-radius:11px !important; padding:13px 18px !important; font-weight:700 !important;
-  font-size:.95rem !important; border:none !important;
-  box-shadow:0 10px 26px -12px rgba(109,40,217,.7) !important;
+  font-size:1rem !important; border:none !important;
+  box-shadow:0 10px 26px -12px var(--glow) !important;
 }
-[data-testid^="stBaseButton-primary"]:hover{filter:brightness(1.07);}
+[data-testid^="stBaseButton-primary"]:hover{filter:brightness(1.08);}
 
-/* Colours are pinned here, not left to the theme. config.toml sets
-   primaryColor, but if that file is ever missing Streamlit falls back to its
-   default RED and the paid screen looks like a stranger's app. */
 /* The ' *' half matters. Streamlit wraps button text in its own <p>, and the
    base ".stApp p" colour above would otherwise win there, leaving dark text
    on the purple fill at 2.5:1. Colour the descendants, not just the button. */
@@ -568,20 +608,20 @@ BASE_CSS = """
 [data-testid^="stBaseLinkButton-primary"] *,
 [data-testid="stLinkButton"] a[kind="primary"],
 [data-testid="stLinkButton"] a[kind="primary"] *{
-  color:#FFFFFF !important;
+  color:var(--onbrand) !important;
 }
 [data-testid^="stBaseButton-primary"],
 [data-testid^="stBaseLinkButton-primary"],
 [data-testid="stLinkButton"] a[kind="primary"]{
   /* border-color too: Streamlit outlines link buttons in primaryColor, which
      left a thin red ring around the purple Buy button. */
-  background:#6D28D9 !important; border-color:#6D28D9 !important;
+  background:var(--brand) !important; border-color:var(--brand) !important;
 }
 [data-testid^="stBaseButton-secondary"],
 [data-testid^="stBaseLinkButton-secondary"],
 [data-testid="stLinkButton"] a[kind="secondary"]{
   border-radius:11px !important; font-weight:600 !important;
-  background:#FFFFFF !important; border:1px solid #C6B9EC !important;
+  background:var(--s1) !important; border:1px solid var(--bd2) !important;
 }
 [data-testid^="stBaseButton-secondary"],
 [data-testid^="stBaseButton-secondary"] *,
@@ -589,123 +629,160 @@ BASE_CSS = """
 [data-testid^="stBaseLinkButton-secondary"] *,
 [data-testid="stLinkButton"] a[kind="secondary"],
 [data-testid="stLinkButton"] a[kind="secondary"] *{
-  color:#4C1D95 !important;
+  color:var(--brandink) !important;
 }
 
 /* ---- inputs ---- */
 [data-testid="stTextInputRootElement"], [data-testid="stNumberInputContainer"]{
-  border-radius:10px !important; border:1px solid #E4DEF7 !important;
-  background:#FBFAFF !important;
+  border-radius:10px !important; border:1px solid var(--bd) !important;
+  background:var(--s2) !important;
 }
 [data-testid="stTextInputRootElement"]:focus-within,
 [data-testid="stNumberInputContainer"]:focus-within{
-  border-color:#6D28D9 !important; box-shadow:0 0 0 3px rgba(109,40,217,.12) !important;
+  border-color:var(--brand) !important;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent) !important;
+}
+[data-testid="stTextInputRootElement"] input,
+[data-testid="stNumberInputContainer"] input{
+  background:transparent !important; color:var(--ink) !important; font-size:1rem !important;
 }
 [data-testid="stNumberInputContainer"] input{font-variant-numeric:tabular-nums;}
+/* Browsers fade placeholders by default, which on the dark canvas left
+   "e.g. Infosys" almost unreadable. Set the colour and cancel the fade. */
+.stApp input::placeholder{color:var(--ink3) !important;opacity:1 !important;}
 /* The steppers stay (they are useful on a phone) but stop competing with the
    figure itself. */
 [data-testid="stNumberInputStepUp"], [data-testid="stNumberInputStepDown"]{
-  background:transparent !important; color:#8578A6 !important; border:none !important;
+  background:transparent !important; color:var(--ink3) !important; border:none !important;
 }
 [data-testid="stNumberInputStepUp"]:hover, [data-testid="stNumberInputStepDown"]:hover{
-  color:#6D28D9 !important; background:#F2EEFD !important;
+  color:var(--brand2) !important; background:var(--s3) !important;
 }
-.stTextInput label, .stNumberInput label, .stSelectbox label{
-  font-size:.85rem !important; font-weight:500 !important; color:#4A3D6B !important;
-}
-[data-baseweb="select"] > div{
-  border-radius:10px !important; border-color:#E4DEF7 !important;
-  background:#FBFAFF !important;
-}
-[data-baseweb="select"] > div:focus-within{
-  border-color:#6D28D9 !important; box-shadow:0 0 0 3px rgba(109,40,217,.12) !important;
+.stTextInput label, .stNumberInput label, .stSelectbox label, .stToggle label{
+  font-size:.95rem !important; font-weight:500 !important; color:var(--ink2) !important;
 }
 
+/* Selects are painted by Streamlit itself from config.toml's
+   secondaryBackgroundColor, so they stayed light when the app went dark.
+   The control is div[role="group"] inside the widget — targeted structurally
+   because the only other handle is a hashed emotion class that changes
+   between Streamlit releases. */
+[data-testid="stSelectbox"] div[role="group"]{
+  border-radius:10px !important; border-color:var(--bd) !important;
+  background:var(--s2) !important;
+}
+[data-testid="stSelectbox"] div[role="group"]:focus-within{
+  border-color:var(--brand) !important;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent) !important;
+}
+[data-testid="stSelectbox"] div[role="group"] *{color:var(--ink) !important;}
+[data-testid="stSelectbox"] svg{fill:var(--ink3) !important;}
+
+/* The menu is portalled to <body>, outside .stApp — do not scope these. */
+[role="listbox"], [data-baseweb="popover"] ul, [data-baseweb="menu"]{
+  background:var(--s1) !important; border:1px solid var(--bd) !important;
+}
+[role="option"], [role="listbox"] li{color:var(--ink) !important;
+  background:var(--s1) !important;}
+[role="option"]:hover, [role="listbox"] li:hover,
+[role="option"][aria-selected="true"]{background:var(--s3) !important;}
+
 /* ---- expander + alerts ---- */
-[data-testid="stExpander"]{border:1px solid #E4DEF7 !important;border-radius:12px !important;
-  background:#FFFFFF !important;}
-[data-testid="stExpander"] summary{font-size:.88rem !important;color:#4A3D6B !important;}
+[data-testid="stExpander"]{border:1px solid var(--bd) !important;border-radius:12px !important;
+  background:var(--s1) !important;}
+[data-testid="stExpander"] summary{font-size:.95rem !important;color:var(--ink2) !important;}
 [data-testid="stAlert"]{border-radius:11px !important;}
 </style>
 """
 
+
 GATE_CSS = """
 <style>
 [data-testid="stMainBlockContainer"], .block-container {
-  max-width:640px !important; padding-top:2.2rem !important; padding-bottom:3rem !important;
+  max-width:660px !important; padding-top:2.2rem !important; padding-bottom:3rem !important;
 }
 
-/* ---- brand header ----
-   The hero carries its OWN background and text colours rather than inheriting
-   the page's, so it survives a visitor whose Streamlit is in dark mode. */
-.nyzhero{text-align:center;margin-bottom:26px;background:#F6F3FE;
-  border:1px solid #E4DEF7;border-radius:20px;padding:26px 20px 24px;}
+/* ---- brand header ---- */
+.nyzhero{text-align:center;margin-bottom:26px;background:var(--s3);
+  border:1px solid var(--bd);border-radius:20px;padding:26px 20px 24px;}
 .nyzmark{width:62px;height:62px;margin:0 auto 16px;border-radius:18px;
-  background:#FFFFFF;border:1.5px solid #6D28D9;display:flex;align-items:center;
-  justify-content:center;}
-.nyzname{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:1.85rem;
-  color:#3B0F8F;letter-spacing:-.02em;line-height:1.15;margin-bottom:6px;}
-.stApp .nyzsub{color:#4A3D6B;font-size:.98rem;max-width:42ch;margin:0 auto;}
+  background:var(--s1);border:1.5px solid var(--brand);display:flex;align-items:center;
+  justify-content:center;color:var(--logo);}
+.nyzname{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:1.95rem;
+  color:var(--brandink);letter-spacing:-.02em;line-height:1.15;margin-bottom:6px;}
+.stApp .nyzsub{color:var(--ink2);font-size:1.02rem;max-width:42ch;margin:0 auto;}
 
 /* ---- price band ---- */
-.nyzprice{background:linear-gradient(135deg,#6D28D9,#8B5CF6);border-radius:18px;
+.nyzprice{background:linear-gradient(135deg,var(--brand),var(--brand2));border-radius:18px;
   padding:24px 22px;text-align:center;color:#fff;margin:22px 0 10px;
-  box-shadow:0 16px 40px -18px rgba(109,40,217,.65);}
-.nyzamt{font-family:'Fraunces',serif;font-weight:700;font-size:2.9rem;line-height:1;
+  box-shadow:0 16px 40px -18px var(--glow);}
+.nyzamt{font-family:'Fraunces',serif;font-weight:700;font-size:3rem;line-height:1;
   font-variant-numeric:tabular-nums;}
-.nyzamt small{font-size:.95rem;font-weight:400;opacity:.9;margin-left:7px;
+.nyzamt small{font-size:1rem;font-weight:400;opacity:.9;margin-left:7px;
   font-family:'DM Sans',sans-serif;}
-.nyzterms{font-size:.88rem;opacity:.94;margin-top:7px;}
+.nyzterms{font-size:.92rem;opacity:.95;margin-top:7px;}
 
 /* ---- trust row ---- */
 .nyztrust{display:flex;gap:9px;margin:14px 0 18px;flex-wrap:wrap;}
-.nyztrust div{flex:1 1 30%;background:#F6F3FE;border:1px solid #E4DEF7;
+.nyztrust div{flex:1 1 30%;background:var(--s3);border:1px solid var(--bd);
   border-radius:11px;padding:11px 8px;text-align:center;}
-.nyztrust b{display:block;font-size:1.02rem;color:#6D28D9;font-weight:700;line-height:1.3;}
-.nyztrust span{font-size:.76rem;color:#6B5E8A;}
+.nyztrust b{display:block;font-size:1.08rem;color:var(--brandink);font-weight:700;
+  line-height:1.3;}
+.nyztrust span{font-size:.8rem;color:var(--ink3);}
 
 /* ---- divider ---- */
 .nyzsep{display:flex;align-items:center;gap:13px;margin:30px 0 16px;
-  color:#6B5E8A;font-size:.86rem;font-weight:600;}
-.nyzsep:before,.nyzsep:after{content:"";flex:1;height:1px;background:#E4DEF7;}
+  color:var(--ink3);font-size:.92rem;font-weight:600;}
+.nyzsep:before,.nyzsep:after{content:"";flex:1;height:1px;background:var(--bd);}
 
 /* ---- form card ---- */
 [data-testid="stForm"]{
-  background:#FFFFFF !important; border:1px solid #E4DEF7 !important;
+  background:var(--s1) !important; border:1px solid var(--bd) !important;
   border-radius:16px !important; padding:20px !important;
-  box-shadow:0 12px 34px -20px rgba(76,29,149,.3) !important;
+  box-shadow:0 12px 34px -20px var(--shadow) !important;
 }
 
-/* ---- notes ---- */
-.stApp .nyzfine{font-size:.8rem;color:#6B5E8A;text-align:center;margin-top:16px;line-height:1.65;}
-.stApp .nyzlegal{font-size:.73rem;color:#7A6D99;text-align:center;margin-top:22px;
-  padding-top:16px;border-top:1px solid #EFEBFB;line-height:1.6;}
+/* ---- notes. Scoped under .stApp because Streamlit renders these as <p>,
+   where its own ".stMarkdown p" rule outranks a bare class selector. ---- */
+.stApp .nyzfine{font-size:.88rem;color:var(--ink3);text-align:center;margin-top:16px;
+  line-height:1.65;}
+.stApp .nyzlegal{font-size:.8rem;color:var(--ink3);text-align:center;margin-top:22px;
+  padding-top:16px;border-top:1px solid var(--bd);line-height:1.6;}
 
 @media (max-width:640px){
-  .nyzamt{font-size:2.4rem;}
+  .nyzamt{font-size:2.5rem;}
   /* Keep the three stats on one row on a phone. Stacking them pushed the
      Buy button below the fold. min-width:0 lets them shrink instead. */
   .nyztrust{gap:6px;}
   .nyztrust div{flex:1 1 0;min-width:0;padding:9px 4px;}
-  .nyztrust b{font-size:.94rem;}
-  .nyztrust span{font-size:.64rem;}
+  .nyztrust b{font-size:.98rem;}
+  .nyztrust span{font-size:.68rem;}
 }
 </style>
 """
 
 
+def dark_mode():
+    """True when the viewer has switched this session to dark."""
+    return bool(st.session_state.get("nyz_dark", False))
+
+
 def theme(mode="app"):
     """Inject the shared look, plus the gate layer when asked for it."""
-    st.markdown(BASE_CSS, unsafe_allow_html=True)
+    st.markdown(_base_css(dark_mode()), unsafe_allow_html=True)
     if mode == "gate":
         st.markdown(GATE_CSS, unsafe_allow_html=True)
 
 
+# currentColor, not a fixed purple: the mark is nearly invisible on the dark
+# canvas otherwise. Its container sets color from the --logo token.
 LOGO_SVG = """<svg viewBox="0 0 48 48" fill="none" width="32" height="32">
-  <path d="M13 34V14l12 13.5V14" stroke="#6D28D9" stroke-width="3.8"
+  <path d="M13 34V14l12 13.5V14" stroke="currentColor" stroke-width="3.8"
         stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="30" y="20" width="4" height="14" rx="1.6" fill="#8B5CF6"/>
-  <rect x="36.5" y="25" width="4" height="9" rx="1.6" fill="#C4B5FD"/>
+  <rect x="30" y="20" width="4" height="14" rx="1.6" fill="currentColor"
+        opacity=".78"/>
+  <rect x="36.5" y="25" width="4" height="9" rx="1.6" fill="currentColor"
+        opacity=".5"/>
 </svg>"""
 
 
@@ -826,6 +903,6 @@ def sidebar(data, cfg=None):
     st.markdown(
         # No negative margin: it used to pull this line into the container's
         # top padding, where it was clipped mid-glyph.
-        f"<div style='text-align:right;font-size:.74rem;color:#6B5E8A;"
+        f"<div style='text-align:right;font-size:.82rem;color:var(--ink3);"
         f"margin:0 0 2px'>Licensed to {data.get('email','')}</div>",
         unsafe_allow_html=True)
