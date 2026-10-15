@@ -28,6 +28,7 @@ import hmac
 import html as _html
 import json
 import os
+import re
 import tempfile
 import time
 import uuid
@@ -428,6 +429,82 @@ def device_check(cfg, payment_ref, device, email):
 # closing it needs emailed one-time codes, which is a bigger build.
 # ---------------------------------------------------------------------------
 TRIAL_PREFIX = "nyzvaltrial:"
+
+# A pragmatic subset of RFC 5322. Full RFC allows quoted strings and comments
+# that no real signup form should accept, so this deliberately refuses them.
+#   local  one or more dot-separated atoms, so no leading, trailing or doubled dots
+#   domain one or more labels then a TLD, each label alphanumeric with inner
+#          hyphens only, so "a@.com", "a@b..com" and "a@-b.com" are all refused
+#   TLD    letters only, so "a@b.c0m" is refused
+_EMAIL_RE = re.compile(
+    r"^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+"
+    r"(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*"
+    r"@"
+    r"(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+"
+    r"[A-Za-z]{2,24}$"
+)
+
+# A typo here is worse than a rejection: the month's allowance is spent under
+# an address the person does not own and cannot get back.
+_TYPO_DOMAINS = {
+    "gmial.com": "gmail.com", "gmai.com": "gmail.com", "gmil.com": "gmail.com",
+    "gamil.com": "gmail.com", "gnail.com": "gmail.com", "gmail.co": "gmail.com",
+    "gmail.con": "gmail.com", "gmaill.com": "gmail.com", "googlemail.co": "gmail.com",
+    "yahooo.com": "yahoo.com", "yaho.com": "yahoo.com", "yahoo.co": "yahoo.com",
+    "hotmai.com": "hotmail.com", "hotmial.com": "hotmail.com",
+    "outlok.com": "outlook.com", "outllok.com": "outlook.com",
+    "rediffmai.com": "rediffmail.com", "redifmail.com": "rediffmail.com",
+}
+
+
+def google_ready():
+    """True when Google sign-in is both available and configured.
+
+    Deliberately permissive about failure: if anything here is missing the
+    gate falls back to the typed-email form, so the app keeps working while
+    the Google console side is still half-done.
+    """
+    if not hasattr(st, "login"):
+        return False
+    try:
+        import authlib  # noqa: F401
+    except Exception:
+        return False
+    try:
+        auth = st.secrets.get("auth", {})
+    except Exception:
+        return False
+    return bool(auth.get("client_id") and auth.get("redirect_uri"))
+
+
+def google_user():
+    """The signed-in Google address, or None. Never raises."""
+    try:
+        if not st.user.is_logged_in:
+            return None
+        addr = (getattr(st.user, "email", "") or "").strip().lower()
+        return addr or None
+    except Exception:
+        return None
+
+
+def clean_email(raw):
+    """Normalise an address, or return None when it is not one.
+
+    Returns (address, suggestion). The suggestion is a likely-intended domain
+    for an obvious typo, and is advice rather than a rejection.
+    """
+    addr = (raw or "").strip().strip("<>").lower()
+    if not addr or len(addr) > 254:
+        return None, None
+    if addr.count("@") != 1:
+        return None, None
+    local, _, domain = addr.partition("@")
+    if not local or len(local) > 64 or not domain or len(domain) > 255:
+        return None, None
+    if not _EMAIL_RE.match(addr):
+        return None, None
+    return addr, _TYPO_DOMAINS.get(domain)
 
 
 def trial_month(when=None):
@@ -918,18 +995,45 @@ def _gate(cfg, device, auto_id):
         go = st.form_submit_button("Unlock my access", type="primary",
                                    use_container_width=True)
 
+    te, tgo = "", False
     if cfg.get("trial_runs", 0) > 0:
         with st.expander(f"Try it free — {cfg['trial_runs']} valuations a month"):
-            with st.form("nyz_trial"):
-                te = st.text_input("Your email", placeholder="you@example.com",
-                                   key="nyz_trial_email")
-                tgo = st.form_submit_button("Start my free valuations",
-                                            use_container_width=True)
-            st.caption("No payment, no card. The count is kept against your email, "
-                       "so it follows you between browsers, and it refills on the "
-                       "1st of each month.")
-    else:
-        te, tgo = "", False
+            if google_ready():
+                # Verified identity: the address comes from Google, so it
+                # cannot be invented and cannot be mistyped.
+                gmail = google_user()
+                if gmail:
+                    left = trial_left(cfg, gmail)
+                    st.markdown(f"Signed in as **{_html.escape(gmail)}**")
+                    if left == 0:
+                        st.warning(
+                            f"This account has used all {cfg['trial_runs']} free "
+                            "valuations for this month. They refill on the 1st.")
+                    elif st.button("Start my free valuations",
+                                   use_container_width=True, type="primary",
+                                   key="nyz_g_start"):
+                        now = int(time.time())
+                        _grant(cfg, {"ref": trial_ref(gmail), "email": gmail,
+                                     "amount": 0, "created_at": now,
+                                     "expires_at": now + 365 * 86400,
+                                     "comp": False, "trial": True, "google": True})
+                else:
+                    if st.button("Continue with Google", use_container_width=True,
+                                 type="primary", key="nyz_g_login"):
+                        st.login()
+                    st.caption(
+                        f"{cfg['trial_runs']} valuations a month, no payment and no "
+                        "card. We read your email address only, to count the free "
+                        "runs against it. The count refills on the 1st.")
+            else:
+                with st.form("nyz_trial"):
+                    te = st.text_input("Your email", placeholder="you@example.com",
+                                       key="nyz_trial_email")
+                    tgo = st.form_submit_button("Start my free valuations",
+                                                use_container_width=True)
+                st.caption("No payment, no card. The count is kept against your "
+                           "email, so it follows you between browsers, and it "
+                           "refills on the 1st of each month.")
 
     with st.expander("I have a free pass"):
         with st.form("nyz_comp"):
@@ -950,9 +1054,16 @@ def _gate(cfg, device, auto_id):
         'investment adviser.</p>', unsafe_allow_html=True)
 
     if tgo:
-        addr = (te or "").strip().lower()
-        if "@" not in addr or "." not in addr.split("@")[-1]:
-            st.error("Please enter an email address so the free runs can be counted.")
+        addr, typo = clean_email(te)
+        if not addr:
+            st.error("That does not look like an email address. The free "
+                     "valuations are counted against it, so it needs to be one "
+                     "you can actually receive mail at.")
+        elif typo and st.session_state.get("nyz_typo_ack") != addr:
+            st.warning(f"Did you mean **{te.strip().split('@')[0]}@{typo}**? "
+                       "Fix it above, or press the button again to use the "
+                       "address exactly as you typed it.")
+            st.session_state["nyz_typo_ack"] = addr
         else:
             left = trial_left(cfg, addr)
             if left == 0:
@@ -1018,6 +1129,14 @@ def sign_out(cfg, data):
         device_forget(cfg, data.get("ref"), st.session_state.get("nyz_device"))
     st.session_state.pop("nyz_token", None)
     st.session_state["nyz_do_clear"] = True
+    # A Google session has to end too. Without this the gate would see the
+    # account still signed in and hand straight back the trial they just left.
+    if data.get("google") and google_user():
+        try:
+            st.logout()
+            return
+        except Exception:
+            pass
     st.rerun()
 
 
